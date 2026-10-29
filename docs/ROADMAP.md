@@ -1,0 +1,65 @@
+# Dev Island — ilerleyen fazlar
+
+İlk sürüme bağımlılık oluşturmayan gelecek işlerin kaydı. Mobil bildirim ilk fazdan bilinçli olarak çıkarıldı. Sağlayıcı seçimi henüz yapılmadı.
+
+## Faz 1.5 — dağıtılabilir beta kabulü
+
+- Gerçek Claude oturumlarını VS Code, Cursor, Warp ve Apple Terminal’de test et.
+- Bildirim/Automation izinlerinin reddedilmesi ve sonradan verilmesi.
+- İkinci, temiz Apple Silicon Mac; macOS 14 tabanı ve güncel macOS.
+- Çentik, harici ekran, kapak kapalı kullanım, Spaces, tam ekran, uyku/uyanma.
+- VoiceOver ve klavye akışlarının fiziksel doğrulaması.
+- Instruments ile CPU, enerji, disk yazımı ve 1 saniyelik canlı olay hedefi.
+- Developer ID sertifikalarıyla imza, notarization, staple, temiz makinede Gatekeeper doğrulaması.
+- Ürün adı ve dağıtım kimliğini kesinleştir. v0.3 özel di monogramını, turuncu kimliği ve üç piksel maskotu içerir.
+
+## Faz 2 — v0.2/v0.3 kaynak uygulaması tamamlandı
+
+- Ortak durum motoruyla çalışan native piksel Clawd.
+- Ada, masaüstü ve ayarlar için aynı çizim bileşeni.
+- Çalışma, soru, plan, izin, tek seferlik kutlama, hata ve bağlantı kesilmesi pozları.
+- Sürükleme, kalıcı konum, boyutlandırma ve şeffaf alanlarda mouse geçişi.
+- Ada + maskot / yalnızca ada / yalnızca maskot; ikinci bildirim/ses yok.
+- Tema ve malzeme ayrı; macOS 26 Liquid Glass, eski sürümlere frosted fallback.
+- Canlı cihaz, enerji, çoklu ekran ve erişilebilirlik kabulü VALIDATION.md üzerinden izlenir.
+
+v0.3: Clawd, Kedi ve Robot; karakter başına renk, uygulama rengini izleme, kendi silüetine göre hit maskesi. Sade macOS arayüzü, tema koordinatörü ve ölçülen kompakt ada yerleşimi eklendi.
+
+Sonraki maskot genişlemeleri: kullanıcının sprite yüklemesi ve isteğe bağlı gezinme. Bunlar v0.3 kapsamı değildir.
+
+## Faz 3 — telefona bildirim
+
+### Kullanıcı ihtiyacı
+
+Mac’ten uzaktayken “proje soru/plan/izin bekliyor” veya “yanıt tamamlandı” uyarısını telefonda görmek. İlk mobil sürüm yalnızca bildirim ve durum gösterimi hedefler; uzaktan komut/izin onayı ayrı bir ürün kararıdır.
+
+### Araştırılan yollar
+
+| Yol | Avantaj | Gereksinim / sınır |
+| --- | --- | --- |
+| Pushover | iOS ve Android; Mac’ten doğrudan HTTPS; kendi sunucumuz olmadan küçük pilot | Üçüncü taraf uygulama, kullanıcı anahtarları ve güncel ücret/kota kontrolü |
+| Kendi web uygulamamız + Web Push | Kendi ürün deneyimi, mağaza uygulamasına ihtiyaç olmadan | Eşleştirme/backend/push aboneliği; iPhone’da ana ekrana eklenmiş web uygulaması |
+| Kendi iOS/Android companion uygulamamız | QR eşleştirme ve en bütünleşik deneyim | Ayrı mobil uygulama, APNs/FCM, backend, mağaza ve sürekli bakım |
+
+Pushover’ın planlama araştırmasında görülen bireysel fiyatı platform başına tek seferlik 4,99 USD idi. Bu yalnızca 29 Ekim 2026 araştırma notudur; faz açıldığında fiyat ve hizmet şartları yeniden doğrulanır. iOS ana ekran Web Push desteği 16.4+ ile belgelenmiştir; hedef sürümler yine güncel belgelerle doğrulanır.
+
+### Faz açıldığında kararlaştırılacaklar
+
+- Sağlayıcı ve telefon işletim sistemi kapsamı.
+- Mac/telefon eşleştirmesi, anahtarların Keychain’de tutulması, iptal ve cihaz kaybı.
+- Varsayılan payload yalnızca durum; proje adını paylaşma ayrı tercih. Kod/komut/soru gönderimi varsayılan kapalı.
+- Çevrimdışı kuyruk, tekrar engelleme, teslim süresi ve eski bildirimin sona ermesi.
+- Kullanıcı Mac’te aktifken mobil uyarıların azaltılması.
+- Mac uyurken yeni yerel Claude olayı üretilemeyeceğinin açık anlatılması.
+- Push tesliminin garanti olmadığının ürün davranışına yansıtılması; uzaktan eylem hedeflenirse ayrı kimlik doğrulama tasarımı.
+
+Kaynaklar: [Pushover API](https://pushover.net/api), [Pushover fiyatlandırma](https://pushover.net/pricing), [WebKit iOS Web Push](https://webkit.org/blog/13878/).
+
+## Daha sonraki uyumluluk işleri
+
+- VS Code/Cursor eklentisiyle doğru terminal paneline dönüş.
+- Warp mevcut pane/sekme yönlendirmesi için yeni resmî API çıkarsa adaptör.
+- Intel/macOS sürüm matrisi ve universal binary.
+- SSH, tmux, uzak Claude oturumları; oturum sahibine dönüş protokolü.
+- Diğer ajanlar için sağlayıcı adaptörleri; izin ve tamamlanma sözleşmelerini ayrı doğrula.
+- İmzalı otomatik güncelleme kanalı ve geri alma.
