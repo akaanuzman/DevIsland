@@ -36,12 +36,14 @@ import CDevIsland
     var showSettings: (() -> Void)?
     var showSessions: (() -> Void)?
     var presentAlert: ((String) -> Void)?
+    var installVSCodeConnector: (() -> Void)?
     var routeSession: ((AgentSession) -> Void)?
     var resetMascotPosition: (() -> Void)?
     var resetIslandPosition: (() -> Void)?
     private var celebratingSessionID: String?
     private var celebrationGate = CelebrationGate()
     private var celebrationTask: Task<Void, Never>?
+    private var nameRefresh: Task<Void, Never>?
     private var socketSource: DispatchSourceRead?
     private var timer: Timer?
     private var soundPlayer: AVAudioPlayer?
@@ -103,7 +105,7 @@ import CDevIsland
             source.resume(); socketSource = source
         } else { status = t("Canlı bağlantı açılamadı; dosya kuyruğu etkin.", "Live connection unavailable; file queue is active.") }
         drainQueue(replay: true)
-        validateProcesses()
+        validateProcesses(); refreshSessionNames()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
         }
@@ -115,13 +117,14 @@ import CDevIsland
         if CommandLine.arguments.contains("--demo") { seedDemo() }
     }
     func stop() {
+        nameRefresh?.cancel(); nameRefresh = nil
         celebrationTask?.cancel()
         for task in pendingCompletion.values { task.cancel() }
         timer?.invalidate(); socketSource?.cancel()
         if socketFD >= 0 { unlink(paths.socket) }
         try? repository?.save(ledger)
     }
-    @objc private func woke() { visualsAwake = true; drainQueue(replay: true); validateProcesses() }
+    @objc private func woke() { visualsAwake = true; drainQueue(replay: true); validateProcesses(); refreshSessionNames() }
     @objc private func sleeping() {
         visualsAwake = false; celebrationTask?.cancel(); celebratingSessionID = nil; celebrationStarted = nil; refreshCompanion()
         for task in pendingCompletion.values { task.cancel() }; pendingCompletion.removeAll()
@@ -129,6 +132,31 @@ import CDevIsland
     func refreshCompanion() {
         let next = CompanionResolver.resolve(sessions: ledger.sortedSessions, seen: preferences.seenCompletions, celebrating: celebratingSessionID)
         if companion != next { companion = next }
+    }
+    func refreshSessionNames() {
+        guard nameRefresh == nil else { return }
+        let snapshot = sessions, directory = URL(fileURLWithPath: configPath)
+        nameRefresh = Task { [weak self] in
+            let names = await Task.detached(priority: .utility) {
+                ClaudeSessionNames.lookup(sessions: snapshot, configDirectory: directory)
+            }.value
+            guard !Task.isCancelled, let self else { return }
+            guard URL(fileURLWithPath: self.configPath).standardizedFileURL == directory.standardizedFileURL else { self.nameRefresh = nil; return }
+            self.applySessionNames(names, baseline: snapshot)
+            self.nameRefresh = nil
+        }
+    }
+    func applySessionNames(_ names: [String: ClaudeSessionName], baseline: [AgentSession]? = nil) {
+        var updated = ledger, changed = false
+        for (id, name) in names {
+            guard let session = updated.sessions[id], session.isActive,
+                  session.sessionName != name,
+                  session.sessionName?.origin != .custom || name.origin == .custom else { continue }
+            // A newer hook/rename may have arrived while the background read was running.
+            if let baseline, baseline.first(where: { $0.id == id })?.sessionName != session.sessionName { continue }
+            updated.sessions[id]?.sessionName = name; changed = true
+        }
+        if changed { ledger = updated; try? repository?.save(ledger) }
     }
     func sessionPresentation(for session: AgentSession) -> SessionPresentation {
         SessionPresentation(session: session, hideProjects: preferences.hideProjects,
@@ -209,6 +237,7 @@ import CDevIsland
     private func tick() {
         maintenanceTick += 1
         if maintenanceTick % 2 == 0 { drainQueue(replay: false) }
+        if maintenanceTick % 5 == 0 { refreshSessionNames() }
         if maintenanceTick % 15 == 0 { validateProcesses() }
         if maintenanceTick % 60 == 0 { ledger.prune(days: preferences.retentionDays); try? repository?.save(ledger) }
         for session in sessions {

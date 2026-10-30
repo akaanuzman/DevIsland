@@ -28,6 +28,7 @@ public struct SessionLedger: Codable {
         if event.source.bundleID != nil { s.source.bundleID = event.source.bundleID }
         if event.source.processID != nil { s.source.processID = event.source.processID; s.source.processStart = event.source.processStart }
         if event.source.tty != nil { s.source.tty = event.source.tty }
+        if let name = event.sessionName, s.sessionName?.origin != .custom || name.origin == .custom { s.sessionName = name }
         if let count = event.backgroundCount { s.backgroundCount = count }
         if let count = event.scheduledCount { s.scheduledCount = count }
         switch event.kind {

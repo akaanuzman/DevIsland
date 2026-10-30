@@ -19,11 +19,12 @@ func launchTrace(_ stage: String) {
                 let model = AppModel()
                 model.preferences.language = "tr"
                 model.ledger = SessionLedger()
-                for (id, project, kind) in [("preview-cookify", "Cookify", EventKind.question), ("preview-nailoria", "Nailoria", .plan), ("preview-landing", "Landing", .toolStarted)] {
+                for (id, project, kind, name) in [("preview-cookify", "no_cigaratte", EventKind.question, "improve-shop-experience"), ("preview-nailoria", "no_cigaratte", .plan, "alvi-app-store-launch-prep"), ("preview-landing", "no_cigaratte", .toolStarted, "alvi-landing-site-plan")] {
                     model.ledger.apply(AgentEvent(sessionID: id, kind: kind, cwd: "/Projects/" + project, toolCallID: id,
-                                                 source: .init(bundleID: TerminalChoice.cursor.rawValue)))
+                                                 source: .init(bundleID: TerminalChoice.cursor.rawValue), sessionName: .init(name, origin: .automatic)))
                 }
                 model.integrationInstalled = true
+                model.installVSCodeConnector = {} // Render the available production action; never install during a preview.
                 model.preferences = Preferences(); model.preferences.language = "tr"
                 for theme in [ThemeMode.light, .dark] {
                     model.preferences.theme = theme; model.preferences.surface = .liquid
@@ -100,6 +101,20 @@ func launchTrace(_ stage: String) {
                 return
             } catch { FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8)); exit(1) }
         }
+        // Explicit diagnostic action: same routing client as Return to app, no ledger/hook writes.
+        if let index = CommandLine.arguments.firstIndex(of: "--focus-vscode-process") {
+            do {
+                guard CommandLine.arguments.indices.contains(index + 2), let pid = Int32(CommandLine.arguments[index + 1]), pid > 1,
+                      let birth = UInt64(CommandLine.arguments[index + 2]) else { throw EditorRoutingError.sourceUnavailable }
+                let session = AgentSession(id: "routing-diagnostic", cwd: "", lastEvent: Date(),
+                    source: .init(bundleID: TerminalChoice.vscode.rawValue, processID: pid, processStart: birth))
+                let target = try EditorRouteClient.focus(session: session)
+                let result: [String: Any] = ["passed": true, "windowID": target.window.windowID,
+                    "terminalID": target.terminal.id, "workspaceFolders": target.window.workspaceFolders]
+                let data = try JSONSerialization.data(withJSONObject: result, options: [.sortedKeys])
+                FileHandle.standardOutput.write(data); FileHandle.standardOutput.write(Data([10])); return
+            } catch { FileHandle.standardError.write(Data(("Routing failed: \(error)\n").utf8)); exit(1) }
+        }
         if CommandLine.arguments.contains("--verify-storage") {
             do {
                 let root = FileManager.default.temporaryDirectory.appendingPathComponent("dev-island-storage-" + UUID().uuidString)
@@ -107,15 +122,16 @@ func launchTrace(_ stage: String) {
                 defer { try? FileManager.default.removeItem(at: root) }
                 let repository = try SessionRepository(root: root)
                 var ledger = SessionLedger()
-                ledger.apply(AgentEvent(sessionID: "storage-smoke", kind: .question, cwd: "/Test", toolCallID: "q", preview: "DO-NOT-PERSIST"))
+                ledger.apply(AgentEvent(sessionID: "storage-smoke", kind: .question, cwd: "/Test", toolCallID: "q", preview: "DO-NOT-PERSIST", sessionName: .init("storage-named-session", origin: .automatic)))
                 try repository.save(ledger)
                 let secondRepository = try SessionRepository(root: root)
                 let restored = try secondRepository.load()
                 guard restored.sessions["storage-smoke"]?.state == .question,
                       restored.sessions["storage-smoke"]?.preview == nil,
+                      restored.sessions["storage-smoke"]?.sessionName?.value == "storage-named-session",
                       restored.sessions["storage-smoke"]?.pending.count == 1,
                       restored.history.count == 1 else { throw CocoaError(.fileReadCorruptFile) }
-                print("{\"passed\":true,\"swiftDataRoundTrip\":true,\"waitingPreserved\":true,\"previewPersisted\":false}")
+                print("{\"passed\":true,\"swiftDataRoundTrip\":true,\"sessionNamePreserved\":true,\"waitingPreserved\":true,\"previewPersisted\":false}")
                 return
             } catch {
                 FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8)); exit(1)

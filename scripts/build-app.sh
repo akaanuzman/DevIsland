@@ -9,6 +9,7 @@ mkdir -p "$app/Contents/MacOS" "$app/Contents/Helpers" "$app/Contents/Resources/
 cp "$binary_dir/DevIsland" "$app/Contents/MacOS/DevIsland"
 cp "$binary_dir/dev-island-bridge" "$app/Contents/Helpers/dev-island-bridge"
 cp Resources/Info.plist "$app/Contents/Info.plist"
+python3 scripts/package-vscode-extension.py "$app/Contents/Resources/DevIslandVSCode.vsix"
 cat > "$app/Contents/Resources/tr.lproj/InfoPlist.strings" <<'EOF'
 "NSAppleEventsUsageDescription" = "Dev Island, Claude oturumuna ait Apple Terminal sekmesini seçebilir. İzin vermezsen yalnızca Terminal uygulamasını öne getirir.";
 EOF
@@ -33,6 +34,6 @@ else
     codesign --force --options runtime --timestamp --sign "$identity" --entitlements Resources/DevIsland.entitlements "$app"
 fi
 codesign --verify --deep --strict "$app"
-ditto -c -k --sequesterRsrc --keepParent "$app" dist/Dev-Island-0.3.4-arm64.zip
+ditto -c -k --sequesterRsrc --keepParent "$app" dist/Dev-Island-0.3.6-arm64.zip
 echo "Built: $app"
 if [ "$identity" = "-" ]; then echo "Local ad-hoc signature. Developer ID signing and notarization are still required for public distribution."; fi

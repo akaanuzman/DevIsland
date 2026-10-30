@@ -48,15 +48,16 @@ public struct AgentEvent: Codable, Identifiable {
     public var agentID: String?
     public var source: SourceApplication
     public var preview: String?
+    public var sessionName: ClaudeSessionName?
     public var backgroundCount: Int?
     public var scheduledCount: Int?
     public init(id: UUID = UUID(), sessionID: String, timestamp: Date = Date(), kind: EventKind, cwd: String,
                 toolCallID: String? = nil, toolName: String? = nil, agentID: String? = nil,
                 source: SourceApplication = .init(), preview: String? = nil,
-                backgroundCount: Int? = nil, scheduledCount: Int? = nil) {
+                backgroundCount: Int? = nil, scheduledCount: Int? = nil, sessionName: ClaudeSessionName? = nil) {
         self.id = id; self.sessionID = sessionID; self.timestamp = timestamp; self.kind = kind; self.cwd = cwd
         self.toolCallID = toolCallID; self.toolName = toolName; self.agentID = agentID; self.source = source
-        self.preview = preview; self.backgroundCount = backgroundCount; self.scheduledCount = scheduledCount
+        self.preview = preview; self.sessionName = sessionName; self.backgroundCount = backgroundCount; self.scheduledCount = scheduledCount
     }
     public var withoutPreview: AgentEvent { var copy = self; copy.preview = nil; return copy }
     public var correlationKey: String { "\(agentID ?? "main"):\(toolCallID ?? toolName ?? "notification")" }
@@ -85,12 +86,13 @@ public struct AgentSession: Codable, Identifiable {
     public var muted = false
     public var snoozedUntil: Date?
     public var preview: String?
+    public var sessionName: ClaudeSessionName?
     public var attentionSince: Date?
     public var reminderSent = false
     public var revalidated = true
     public var project: String { URL(fileURLWithPath: cwd).lastPathComponent }
     public var shortID: String { String(id.prefix(7)) }
-    public var title: String { label.isEmpty ? project : label }
+    public var title: String { label.isEmpty ? (sessionName?.value ?? project) : label }
     public var isActive: Bool { state != .ended }
     public var withoutPreview: AgentSession { var copy = self; copy.preview = nil; return copy }
     public init(id: String, cwd: String, lastEvent: Date, source: SourceApplication) {

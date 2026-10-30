@@ -56,3 +56,55 @@ int di_process(int pid, int *parent, uint64_t *start, char *path, int capacity, 
     }
     return 1;
 }
+
+#include <poll.h>
+#include <time.h>
+static int64_t di_milliseconds(void) {
+    struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t);
+    return (int64_t)t.tv_sec * 1000 + t.tv_nsec / 1000000;
+}
+static int di_wait(int fd, short events, int64_t deadline) {
+    for (;;) {
+        int64_t left = deadline - di_milliseconds();
+        if (left <= 0) return -2;
+        struct pollfd item = { .fd = fd, .events = events };
+        int r = poll(&item, 1, (int)left);
+        if (r < 0 && errno == EINTR) continue;
+        if (r <= 0) return r == 0 ? -2 : -1;
+        return (item.revents & events) ? 0 : -1;
+    }
+}
+long di_socket_request(const char *path, const void *bytes, size_t length, void *reply, size_t capacity, int timeout_ms) {
+    struct sockaddr_un addr;
+    if (address(path, &addr) || length > 4096 || capacity > 16384 || timeout_ms < 1 || timeout_ms > 2000) return -1;
+    int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (fd < 0) return -1;
+    int yes = 1; setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &yes, sizeof(yes));
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+    int64_t deadline = di_milliseconds() + timeout_ms;
+    if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        if (errno != EINPROGRESS || di_wait(fd, POLLOUT, deadline)) { close(fd); return -1; }
+        int error = 0; socklen_t size = sizeof(error);
+        if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &size) || error) { close(fd); return -1; }
+    }
+    size_t sent = 0, read = 0;
+    while (sent < length) {
+        int ready = di_wait(fd, POLLOUT, deadline);
+        if (ready) { close(fd); return ready; }
+        ssize_t n = send(fd, (const char *)bytes + sent, length - sent, 0);
+        if (n < 0 && (errno == EAGAIN || errno == EINTR)) continue;
+        if (n <= 0) { close(fd); return -1; }
+        sent += (size_t)n;
+    }
+    while (read < capacity) {
+        int ready = di_wait(fd, POLLIN, deadline);
+        if (ready) { close(fd); return ready; }
+        ssize_t n = recv(fd, (char *)reply + read, capacity - read, 0);
+        if (n < 0 && (errno == EAGAIN || errno == EINTR)) continue;
+        if (n <= 0) { close(fd); return -1; }
+        void *end = memchr((char *)reply + read, '\n', (size_t)n);
+        if (end) { long count = (char *)end - (char *)reply; close(fd); return count; }
+        read += (size_t)n;
+    }
+    close(fd); return -1;
+}

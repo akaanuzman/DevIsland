@@ -2,7 +2,7 @@ import Foundation
 
 public enum ClaudeAdapter {
     /// Deliberately whitelist metadata. Prompts, commands, plans and transcripts never enter the queue.
-    public static func decode(_ data: Data, source: SourceApplication = .init(), now: Date = Date()) throws -> AgentEvent? {
+    public static func decode(_ data: Data, source: SourceApplication = .init(), now: Date = Date(), nameLookup: ((String, String?) -> ClaudeSessionName?)? = nil) throws -> AgentEvent? {
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let session = json["session_id"] as? String, !session.isEmpty, session.count <= 256,
               let hook = json["hook_event_name"] as? String else { return nil }
@@ -42,7 +42,9 @@ public enum ClaudeAdapter {
                           toolName: tool, agentID: agent, source: source,
                           preview: preview.map { String($0.filter { !$0.isNewline && !$0.isASCIIControl }.prefix(240)) },
                           backgroundCount: (json["background_tasks"] as? [Any])?.count,
-                          scheduledCount: (json["session_crons"] as? [Any])?.count)
+                          scheduledCount: (json["session_crons"] as? [Any])?.count,
+                          sessionName: (json["session_title"] as? String).flatMap { ClaudeSessionName($0, origin: .custom) }
+                            ?? nameLookup?(session, json["transcript_path"] as? String))
     }
 }
 

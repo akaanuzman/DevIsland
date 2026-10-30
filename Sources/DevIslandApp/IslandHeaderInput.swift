@@ -5,6 +5,7 @@ import DevIslandCore
 struct IslandHeaderInput: NSViewRepresentable {
     @ObservedObject var presentation: IslandPresentation
     let resetTitle: String
+    var sessionHelp: String? = nil
     func makeNSView(context: Context) -> HeaderInputView {
         let view = HeaderInputView(); view.setAccessibilityElement(false); return view
     }
@@ -12,6 +13,7 @@ struct IslandHeaderInput: NSViewRepresentable {
         view.clicked = presentation.toggle; view.began = presentation.dragBegan
         view.changed = presentation.dragChanged; view.ended = presentation.dragEnded
         view.cancelled = presentation.dragCancelled; view.reset = presentation.resetPosition
+        view.toolTip = sessionHelp
         view.resetTitle = resetTitle
         view.pinToTop = presentation.pinToTop
         view.configurePin(visible: !presentation.attachedToTop, title: presentation.pinTitle)

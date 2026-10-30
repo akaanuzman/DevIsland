@@ -59,7 +59,7 @@ struct SettingsView: View {
                     Circle().fill(model.integrationInstalled && !model.integrationBlocked ? SessionState.completed.tint : islandOrange).frame(width: 5, height: 5)
                     Text(model.integrationInstalled ? model.t("Bağlı", "Connected") : model.t("Bağlı değil", "Not connected"))
                     Spacer()
-                    Text("0.3.4")
+                    Text("0.3.6")
                 }.font(.system(size: 10)).foregroundStyle(Color(colors.secondary)).padding(16)
             }.frame(width: 216).background(Color(colors.canvas))
             Divider()
@@ -352,6 +352,12 @@ struct SettingsView: View {
                 }
                 Text(model.t("Kurulumdan sonra mevcut Claude oturumlarını yeniden başlat. Projeye özel veya kurumsal ayarlar hook’ları engelleyebilir; gerçek bağlantıyı bir prompt göndererek doğrula.", "Restart existing Claude sessions after installation. Project or managed settings can block hooks; verify the real connection by sending a prompt."))
                     .font(.caption).foregroundStyle(Color(colors.secondary))
+                Divider().padding(.vertical, 6)
+                Text(model.t("VS Code pencere ve terminal seçimi", "VS Code window and terminal routing")).font(.headline)
+                Text(model.t("Birden fazla proje/pencere içinden doğru Claude terminaline dönmek için yerel Dev Island eklentisini kur. Açık terminaller yeniden oluşturulmaz.", "Install the local Dev Island extension to return to the exact Claude terminal across projects and windows. Existing terminals are not recreated."))
+                    .font(.callout).foregroundStyle(Color(colors.secondary))
+                Button(model.t("VS Code bağlantısını kur / güncelle", "Install / update VS Code connection")) { model.installVSCodeConnector?() }
+                    .disabled(model.installVSCodeConnector == nil)
             }
             group {
                 sectionLabel(model.t("BAĞLANTIYI DOĞRULA", "VERIFY CONNECTION"))
@@ -364,7 +370,7 @@ struct SettingsView: View {
             }
             group {
                 Text(model.t("Terminale geri dönüş", "Return to terminal")).font(.headline)
-                Text(model.t("Önce olayın kaynak uygulaması seçilir. Kaynak belirsizse tek açık uygulama kullanılır; birden fazla aday varsa sorulur. Apple Terminal’de TTY eşleşmesi için Automation izni gerekebilir. VS Code, Cursor ve Warp uygulama düzeyinde açılır.", "The event’s source application takes priority. Unknown sources use the only running app or prompt you to choose. Apple Terminal TTY selection may request Automation permission. VS Code, Cursor and Warp return at app level."))
+                Text(model.t("Önce olayın kaynak uygulaması seçilir. Kaynak belirsizse tek açık uygulama kullanılır; birden fazla aday varsa sorulur. Apple Terminal’de TTY eşleşmesi için Automation izni gerekebilir. VS Code bağlantısı, ilgili pencereyi ve terminali seçer. Cursor ve Warp uygulama düzeyinde açılır.", "The event’s source application takes priority. Unknown sources use the only running app or prompt you to choose. Apple Terminal TTY selection may request Automation permission. The VS Code connection selects the matching window and terminal. Cursor and Warp return at app level."))
                     .font(.callout).foregroundStyle(Color(colors.secondary))
                 Button(model.t("Hatırlanan terminal tercihini sıfırla", "Reset remembered terminal choice")) { model.preferences.preferredTerminal = nil }
             }

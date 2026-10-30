@@ -57,7 +57,7 @@ Kaynaklar: [Pushover API](https://pushover.net/api), [Pushover fiyatlandırma](h
 
 ## Daha sonraki uyumluluk işleri
 
-- VS Code/Cursor eklentisiyle doğru terminal paneline dönüş.
+- VS Code için tamamlandı (v0.3.6); Cursor eklentisiyle doğru terminal paneline dönüş sonraki uyumluluk kapsamıdır.
 - Warp mevcut pane/sekme yönlendirmesi için yeni resmî API çıkarsa adaptör.
 - Intel/macOS sürüm matrisi ve universal binary.
 - SSH, tmux, uzak Claude oturumları; oturum sahibine dönüş protokolü.
@@ -70,3 +70,9 @@ Kaynaklar: [Pushover API](https://pushover.net/api), [Pushover fiyatlandırma](h
 
 ### v0.3.4 — oturum sunumu
 Kompakt oturum adı, bildirim ve oturum satırlarında oturuma özgü animasyonlu maskotlar eklendi. Hook ve kalıcı tercih şeması korunur. Fiziksel ekran/pointer, Focus, gerçek terminal senaryoları ve Instruments ölçümü dağıtılabilir beta kabulüne dahildir.
+
+### v0.3.5 — gerçek Claude adları
+Hook session_title ve yerel kayıtların oturum kimliğiyle eşlenmesi eklendi. İzlenen mevcut oturumlarda ad tamamlama/yeniden adlandırma, gizlilik ve eski kayıt uyumluluğu korunur. Yerel kayıt formatları sürüm değiştikçe uyumluluk testleri güncellenmelidir. Serbest VS Code tab başlığını okuma, Accessibility/ekran tarama kapsamı değildir.
+
+### v0.3.6 — VS Code tam pencere/terminal dönüşü
+VS Code local macOS için pencereye özel VSIX ve PID ancestry/instance eşlemesi tamamlandı; gerçek 3 pencere/5 terminalde doğrulandı. Cursor ve diğer IDE'lerde aynı düzey, remote/SSH/dev-container ve tmux paneli sonraki uyumluluk işleridir. Native ada düğmesinin fiziksel mouse kabulü, ikinci Mac ve imzalı dağıtım ayrıca takip edilir.

@@ -1,0 +1,15 @@
+{
+  "name": "terminal-router",
+  "displayName": "Dev Island — Terminal Router",
+  "description": "Return to the exact local VS Code window and terminal from Dev Island on macOS.",
+  "publisher": "dev-island-local",
+  "version": "0.1.0",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "extensionKind": ["ui"],
+  "main": "./extension.js",
+  "capabilities": {"untrustedWorkspaces": {"supported": true}, "virtualWorkspaces": false},
+  "contributes": {"commands": [{"command": "devIsland.connectionStatus", "title": "Dev Island: Show Terminal Connection Status"}]},
+  "scripts": {"test": "node --test test/router.test.js"}
+}

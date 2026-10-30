@@ -16,7 +16,7 @@ with tempfile.TemporaryDirectory(prefix="di-", dir="/tmp") as directory:
     home = Path(directory)
     env = {**os.environ, "DEV_ISLAND_HOME": directory}
     payload = {
-        "session_id": "smoke-session", "cwd": "/Projects/Smoke", "hook_event_name": "PreToolUse",
+        "session_id": "smoke-session", "session_title": "smoke-named-session", "cwd": "/Projects/Smoke", "hook_event_name": "PreToolUse",
         "tool_name": "AskUserQuestion", "tool_use_id": "question-1",
         "prompt": "SECRET_PROMPT", "tool_input": {"questions": [{"question": "SECRET_QUESTION"}]},
     }
@@ -29,6 +29,7 @@ with tempfile.TemporaryDirectory(prefix="di-", dir="/tmp") as directory:
     persisted = files[0].read_text()
     assert "SECRET_QUESTION" not in persisted and "SECRET_PROMPT" not in persisted
     assert json.loads(persisted)["kind"] == "question"
+    assert json.loads(persisted)["sessionName"] == {"value": "smoke-named-session", "origin": "custom"}
     assert files[0].stat().st_mode & 0o777 == 0o600
     receiver = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
     receiver.bind(str(home / "events.sock"))
@@ -46,6 +47,7 @@ with tempfile.TemporaryDirectory(prefix="di-", dir="/tmp") as directory:
     for _ in range(10):
         event = json.loads(receiver.recv(32768))
         assert event["preview"] == "SECRET_QUESTION"
+        assert event["sessionName"]["value"] == "smoke-named-session"
         received.add(event["sessionID"])
     assert received == {f"parallel-{i}" for i in range(10)}
     concurrent_wall_ms = (time.monotonic() - started) * 1000
@@ -56,4 +58,4 @@ with tempfile.TemporaryDirectory(prefix="di-", dir="/tmp") as directory:
         assert result.returncode == 0 and not result.stdout and not result.stderr
     print(json.dumps({"passed": True, "offline_bridge_ms": round(offline_ms, 2), "live_bridge_mean_ms": round(live_mean_ms, 2),
                       "concurrent_wall_ms": round(concurrent_wall_ms, 2), "concurrent_processes": 10, "sessions": 10,
-                      "checks": ["app-absent fail-open", "real Unix socket", "metadata-only disk queue", "0600 files", "malformed input", "bounded large input", "silent exit 0"]}, indent=2))
+                      "checks": ["app-absent fail-open", "real Unix socket", "metadata-only disk queue", "session title in socket and queue", "0600 files", "malformed input", "bounded large input", "silent exit 0"]}, indent=2))

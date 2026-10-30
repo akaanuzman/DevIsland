@@ -1,14 +1,15 @@
 {
   "passed": true,
-  "offline_bridge_ms": 195.31,
-  "live_bridge_mean_ms": 28.78,
-  "concurrent_wall_ms": 44.02,
+  "offline_bridge_ms": 275.37,
+  "live_bridge_mean_ms": 30.69,
+  "concurrent_wall_ms": 50.55,
   "concurrent_processes": 10,
   "sessions": 10,
   "checks": [
     "app-absent fail-open",
     "real Unix socket",
     "metadata-only disk queue",
+    "session title in socket and queue",
     "0600 files",
     "malformed input",
     "bounded large input",

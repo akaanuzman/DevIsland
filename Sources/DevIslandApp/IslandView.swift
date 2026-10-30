@@ -109,7 +109,7 @@ struct IslandView: View {
         }
         .padding(.trailing, presentation.attachedToTop ? 0 : 28)
         .padding(.horizontal, 18).frame(width: presentation.headerWidth, height: presentation.safeTop)
-        .overlay { if !snapshot { IslandHeaderInput(presentation: presentation, resetTitle: model.t("Üst ortaya sıfırla", "Reset to top center")) } }
+        .overlay { if !snapshot { IslandHeaderInput(presentation: presentation, resetTitle: model.t("Üst ortaya sıfırla", "Reset to top center"), sessionHelp: name + " · " + (session.map { model.title($0.state) } ?? "")) } }
         .overlay(alignment: .trailing) {
             if snapshot && !presentation.attachedToTop {
                 Image(systemName: "pin.fill").font(.system(size: 12)).foregroundStyle(Color(colors.secondary)).frame(width: 24, height: 24).padding(.trailing, 16)
@@ -151,7 +151,7 @@ struct IslandAlertBody: View {
                     SessionMascotView(model: model, session: session, size: 44, active: active)
                     VStack(alignment: .leading, spacing: 5) {
                         Text(model.title(session.state)).font(.system(size: 14, weight: .semibold))
-                        Text(model.sessionPresentation(for: session).name).font(.system(size: 12)).foregroundStyle(Color(colors.secondary)).lineLimit(1)
+                        Text(model.sessionPresentation(for: session).name).help(model.sessionPresentation(for: session).name).font(.system(size: 12)).foregroundStyle(Color(colors.secondary)).lineLimit(1)
                     }
                     Spacer()
                     Button(action: close) { Image(systemName: "xmark").font(.system(size: 10, weight: .bold)) }
@@ -230,7 +230,7 @@ struct SessionRow: View {
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text(model.sessionPresentation(for: session).name).font(.system(size: 13, weight: .medium)).lineLimit(1)
+                        Text(model.sessionPresentation(for: session).name).help(model.sessionPresentation(for: session).name).font(.system(size: 13, weight: .medium)).lineLimit(1)
                         if session.muted { Image(systemName: "bell.slash.fill").font(.caption2).foregroundStyle(Color(colors.secondary)) }
                         if let until = session.snoozedUntil, until > Date() { Image(systemName: "clock.badge").font(.caption2).foregroundStyle(Color(colors.secondary)) }
                     }

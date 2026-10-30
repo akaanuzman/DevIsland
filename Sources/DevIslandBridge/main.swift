@@ -4,7 +4,7 @@ import Darwin
 
 // This observer must never decide permissions, print JSON, or block Claude on a failure.
 if CommandLine.arguments.contains("--version") {
-    print("Dev Island Bridge 0.3.3")
+    print("Dev Island Bridge 0.3.6")
     exit(0)
 }
 if CommandLine.arguments.contains("--claude-hook") {
@@ -17,7 +17,10 @@ if CommandLine.arguments.contains("--claude-hook") {
             data.append(chunk)
             if data.count > 2 * 1024 * 1024 { exit(0) }
         }
-        if let event = try ClaudeAdapter.decode(data, source: ProcessIdentity.discoverSource()) {
+        let source = ProcessIdentity.discoverSource()
+        if let event = try ClaudeAdapter.decode(data, source: source, nameLookup: { id, path in
+            ClaudeSessionNames.resolve(sessionID: id, transcriptPath: path, processID: source.processID)
+        }) {
             try EventQueue.enqueue(event, paths: .init())
         }
     } catch { /* Fail open, including malformed input and an unavailable application. */ }

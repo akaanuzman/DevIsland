@@ -2,7 +2,21 @@
 
 Claude Code oturumlarını izleyen, yerel çalışan macOS menü çubuğu uygulaması. Soru, plan ve izin bekleme durumlarını çentiğin yanında açılan bir ada, sistem bildirimi ve isteğe bağlı seslerle gösterir.
 
-**Durum:** v0.3.4 yerel alfa. Dağıtılabilir beta kabulü için Developer ID/notarization, ikinci Mac ve gerçek terminal senaryolarının tamamlanması gerekir. Clawd, Kedi ve Robot maskotları bu sürüme dahildir; mobil push sonraki fazdadır.
+**Durum:** v0.3.6 yerel alfa. Dağıtılabilir beta kabulü için Developer ID/notarization, ikinci Mac ve gerçek terminal senaryolarının tamamlanması gerekir. Clawd, Kedi ve Robot maskotları bu sürüme dahildir; mobil push sonraki fazdadır.
+
+## v0.3.6: doğru VS Code penceresi ve terminali
+
+**Uygulamaya dön**, kaynak Claude sürecinin bağlı olduğu VS Code penceresini ve terminali seçer. Aynı projedeki aynı adlı terminaller PID/instance kimliğiyle ayrılır. Kapalı veya doğrulanamayan hedefte başka bir pencere seçilmez, yeni terminal açılmaz.
+
+Bu Mac'te bağlantı eklentisi kuruldu ve üç VS Code penceresinde etkinleşti. Eski Dev Island'dan **Çık** yapıp yeni uygulamayı aç. Başka Mac/profil için Ayarlar → Claude bağlantısı → **VS Code bağlantısını kur / güncelle**. VSIX uygulamanın içinde gelir; gerekirse VS Code Extensions → Install from VSIX ile kurulabilir. Açık pencere bağlanmazsa uygun zamanda Developer: Reload Window kullanılabilir. Mevcut terminaller otomatik yeniden başlatılmaz.
+
+Gerçek 3 pencere ve 5 Claude terminalinde üretim routing istemcisiyle doğrulandı. [Teknik kapsam ve test kanıtı](docs/V036_VSCODE_ROUTING.md). Remote/tmux ve Cursor'da tam terminal seçimi sonraki uyumluluk kapsamındadır.
+
+## v0.3.5: terminaldeki gerçek Claude oturum adı
+
+Ada artık klasör adı yerine `improve-shop-experience` gibi Claude oturum adını kullanır. Mevcut izlenen oturumların adları uygulama açıldığında ve 5 saniyede bir yerel isim metaverisinden tamamlanır. Aynı projedeki oturumlar kimlikleriyle eşleştirilir; `out` gibi değişen çalışma klasörleri isim eşlemesini bozmaz. Dev Island'da elle verilen etiket önceliklidir. Proje gizleme bütün isim alanlarında çalışır. Uzun kompakt adın tamamı başlık tooltip'inde görülebilir.
+
+Claude ayarları ve transcriptlerine yazılmaz. Hook alanı ve yerel formatlar için ayrıntı: [V035](docs/V035_SESSION_NAMES.md). Eski sürümü **Çık** ile kapatıp yeni kopyayı aç; izlenen oturumların adları yeni bir prompt beklemeden yenilenir. Mevcut hook kurulumu geçerlidir; yeni köprü için Claude bağlantı kurulumunu uygulama ayarlarından tekrar çalıştırabilirsin.
 
 ## v0.3.4: oturum adı ve durum maskotları
 
@@ -28,7 +42,7 @@ Görünüm’de vurgu ve karakter rengi için ayrı Varsayılana sıfırla düğ
 
 ## v0.3: kompakt ada, yerel tasarım ve üç maskot
 
-Ana kaynak proje /Users/kaanuzman/Desktop/dev/DevIsland içindedir. Sohbetin outputs/DevIsland-v0.3.4 klasörü yalnızca yayın paketleri, önizlemeler ve doküman teslimidir.
+Ana kaynak proje /Users/kaanuzman/Desktop/dev/DevIsland içindedir. Sohbetin outputs/DevIsland-v0.3.6 klasörü yalnızca yayın paketleri, önizlemeler ve doküman teslimidir.
 
 **Görünüm** bölümünde Sistem/Açık/Koyu tema ve Liquid Glass/Buzlu cam/Opak yüzey ayrı seçilir. macOS 26 gerçek Liquid Glass kullanır; macOS 14/15 buzlu cam karşılığını gösterir. Cam stili, zemin yoğunluğu ve vurgu rengi ayarlanabilir. Reduce Transparency opak yüzeye, Reduce Motion hareketsiz maskot pozlarına ve kısa geçişlere dönüşür.
 
@@ -49,7 +63,7 @@ bash scripts/build-app.sh
 open "dist/Dev Island.app"
 ```
 
-Paketlenmiş uygulama `dist/Dev Island.app`, arşiv `dist/Dev-Island-0.3.4-arm64.zip` altında oluşur. Yerel derleme ad-hoc imzalıdır; başka Mac’lere dağıtım için `scripts/notarize.sh` kullanılır. Finder’da Applications’a taşındıktan sonra hook kurulumu yapılması önerilir. Köprü sabit bir kullanıcı veri dizinine kopyalandığı için uygulama güncellemesi hook komutunu değiştirmez.
+Paketlenmiş uygulama `dist/Dev Island.app`, arşiv `dist/Dev-Island-0.3.6-arm64.zip` altında oluşur. Yerel derleme ad-hoc imzalıdır; başka Mac’lere dağıtım için `scripts/notarize.sh` kullanılır. Finder’da Applications’a taşındıktan sonra hook kurulumu yapılması önerilir. Köprü sabit bir kullanıcı veri dizinine kopyalandığı için uygulama güncellemesi hook komutunu değiştirmez.
 
 İlk açılışta **Hook’ları incele ve bağlan** ile eklenecek kayıtları gör. Kurulum mevcut Claude ayarlarını yedekleyerek korur. Mevcut Claude oturumlarını yeniden başlat, bir prompt gönder ve oturumun listede göründüğünü doğrula. Bildirim izni **Bildirimler ve ses** bölümünden verilir. Girişte başlatma varsayılan kapalıdır.
 
@@ -61,7 +75,7 @@ Paketlenmiş uygulama `dist/Dev Island.app`, arşiv `dist/Dev-Island-0.3.4-arm64
 - Soru/onay sayacı, bildirimi kapatsan da kalır. Yalnızca ilgili Claude devam olayı bu beklemeyi çözer.
 - Kart menüsünden 5 dakika ertele, sustur veya etiket ekle.
 - Kaynak uygulama biliniyorsa ona dönülür. Bilinmiyorsa tek açık aday seçilir veya kullanıcıdan seçim istenir; tercihi hatırlamak mümkündür.
-- Apple Terminal’de TTY eşleşmesi ve Automation izniyle sekme seçilir. VS Code, Cursor ve Warp’ta ilk sürüm uygulamayı öne getirir; doğru bölünmüş paneli seçmeyi garanti etmez.
+- Apple Terminal’de TTY eşleşmesi ve Automation izniyle sekme seçilir. VS Code yerel bağlantısı doğru pencere ve terminali seçer. Cursor ve Warp uygulamayı öne getirir; bu ikisinde doğru paneli seçme desteği sonraki fazdadır.
 - `Stop` yalnızca yanıt sonudur: projedeki işlerin başarıyla tamamlandığına dair doğrulama değildir.
 
 ## Ses ve Focus

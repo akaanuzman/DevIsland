@@ -73,6 +73,16 @@ public struct ProcessIdentity {
         if kill(pid, 0) == -1 && errno == ESRCH { return false }
         return nil // Access denied must not look like process death.
     }
+    /// Validate the original Claude PID birth time before walking to its current terminal shell.
+    public static func ancestors(source: SourceApplication) -> [ProcessIdentity] {
+        guard let pid = source.processID, let birth = source.processStart, let first = read(pid), first.start == birth else { return [] }
+        var result: [ProcessIdentity] = [], visited = Set<Int32>(), current: ProcessIdentity? = first
+        for _ in 0..<32 {
+            guard let info = current, info.pid > 1, visited.insert(info.pid).inserted else { break }
+            result.append(info); current = read(info.parent)
+        }
+        return result
+    }
     public static func discoverSource() -> SourceApplication {
         var pid = getppid(), result = SourceApplication()
         var visited = Set<Int32>()
