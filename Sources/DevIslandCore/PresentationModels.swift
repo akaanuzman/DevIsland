@@ -24,19 +24,47 @@ public enum CompanionResolver {
             return rank($0) == rank($1) ? $0.lastEvent > $1.lastEvent : rank($0) < rank($1)
         }
         guard let session = sorted.first else { return .init() }
-        let pose: ClawdPose
-        switch session.state {
-        case .question: pose = .question
-        case .plan: pose = .plan
-        case .permission: pose = .permission
-        case .running: pose = .working
-        case .failed: pose = .failed
-        case .disconnected: pose = .disconnected
-        case .completed: pose = celebrating == session.id ? .celebration : .idle
-        default: pose = .idle
-        }
-        return CompanionActivity(sessionID: session.id, pose: pose, state: session.state,
+        return CompanionActivity(sessionID: session.id, pose: pose(for: session, celebrating: celebrating), state: session.state,
                                  waitingCount: active.filter { $0.state.needsAttention }.count)
+    }
+    public static func pose(for session: AgentSession, celebrating: String? = nil) -> ClawdPose {
+        switch session.state {
+        case .question: return .question
+        case .plan: return .plan
+        case .permission: return .permission
+        case .running: return .working
+        case .failed: return .failed
+        case .disconnected: return .disconnected
+        case .completed: return celebrating == session.id ? .celebration : .idle
+        default: return .idle
+        }
+    }
+}
+
+/// A display-only projection: never persists project names or animation state.
+public struct SessionPresentation: Equatable {
+    public let sessionID: String
+    public let name: String
+    public let state: SessionState
+    public let pose: ClawdPose
+    public let celebrationStarted: Date?
+    public init(session: AgentSession, hideProjects: Bool, celebrating: String? = nil, celebrationStarted: Date? = nil) {
+        sessionID = session.id
+        name = hideProjects ? "Claude Code" : session.title
+        state = session.state
+        pose = CompanionResolver.pose(for: session, celebrating: celebrating)
+        self.celebrationStarted = pose == .celebration ? celebrationStarted : nil
+    }
+}
+
+/// Stable text budget independent of a session's title, with symmetric camera wings.
+public enum IslandHeaderLayout {
+    public static func width(notch: Double, available: Double) -> Double {
+        min(max(320, max(0, notch) + 352), max(1, available - 16))
+    }
+    public static func nameWidth(header: Double, notch: Double, detached: Bool) -> Double {
+        let room = notch > 0 ? (header - notch) / 2 - 56 : header - 124 - (detached ? 28 : 0)
+        return min(120, max(0, room))
     }
 }
 
@@ -100,13 +128,22 @@ public struct IslandInteraction {
     public private(set) var generation: UInt64 = 0
     public private(set) var pinned = false
     public private(set) var hovered = false
+    public private(set) var dragging = false
+    public private(set) var hoverSuppressed = false
     public init() {}
     public mutating func enter() -> UInt64 { hovered = true; generation &+= 1; return generation }
-    public mutating func leave() -> UInt64 { hovered = false; generation &+= 1; return generation }
+    public mutating func leave() -> UInt64 { hovered = false; hoverSuppressed = false; generation &+= 1; return generation }
     public mutating func pin() { pinned = true; generation &+= 1 }
     public mutating func collapse() { pinned = false; generation &+= 1 }
+    public mutating func beginDrag() { dragging = true; generation &+= 1 }
+    public mutating func endDrag(hovered: Bool) {
+        dragging = false; self.hovered = hovered; hoverSuppressed = hovered; generation &+= 1
+    }
+    public mutating func resetForDock() {
+        pinned = false; hovered = false; dragging = false; hoverSuppressed = false; generation &+= 1
+    }
     public func permits(_ ticket: UInt64, opening: Bool) -> Bool {
-        ticket == generation && !pinned && (opening ? hovered : !hovered)
+        ticket == generation && !pinned && !dragging && !hoverSuppressed && (opening ? hovered : !hovered)
     }
 }
 

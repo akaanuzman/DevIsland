@@ -38,6 +38,7 @@ import CDevIsland
     var presentAlert: ((String) -> Void)?
     var routeSession: ((AgentSession) -> Void)?
     var resetMascotPosition: (() -> Void)?
+    var resetIslandPosition: (() -> Void)?
     private var celebratingSessionID: String?
     private var celebrationGate = CelebrationGate()
     private var celebrationTask: Task<Void, Never>?
@@ -128,6 +129,14 @@ import CDevIsland
     func refreshCompanion() {
         let next = CompanionResolver.resolve(sessions: ledger.sortedSessions, seen: preferences.seenCompletions, celebrating: celebratingSessionID)
         if companion != next { companion = next }
+    }
+    func sessionPresentation(for session: AgentSession) -> SessionPresentation {
+        SessionPresentation(session: session, hideProjects: preferences.hideProjects,
+                            celebrating: celebratingSessionID, celebrationStarted: celebrationStarted)
+    }
+    func islandSession(alertSessionID: String? = nil) -> AgentSession? {
+        if let id = alertSessionID, let session = ledger.sessions[id], session.isActive { return session }
+        return companion.sessionID.flatMap { ledger.sessions[$0] }
     }
     func markCompletionsSeen() {
         var seen = preferences.seenCompletions

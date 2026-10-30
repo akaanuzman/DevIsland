@@ -59,7 +59,7 @@ struct SettingsView: View {
                     Circle().fill(model.integrationInstalled && !model.integrationBlocked ? SessionState.completed.tint : islandOrange).frame(width: 5, height: 5)
                     Text(model.integrationInstalled ? model.t("Bağlı", "Connected") : model.t("Bağlı değil", "Not connected"))
                     Spacer()
-                    Text("0.3.0")
+                    Text("0.3.4")
                 }.font(.system(size: 10)).foregroundStyle(Color(colors.secondary)).padding(16)
             }.frame(width: 216).background(Color(colors.canvas))
             Divider()
@@ -254,7 +254,14 @@ struct SettingsView: View {
                         Slider(value: $model.preferences.surfaceDensity, in: 0...1).accessibilityLabel(model.t("Zemin yoğunluğu", "Surface density"))
                     }
                 }
-                ColorPicker(model.t("Vurgu rengi", "Accent color"), selection: Binding(get: { Color(hex: model.preferences.accentHex) }, set: { model.preferences.accentHex = $0.hexString }), supportsOpacity: false)
+                HStack {
+                    ColorPicker(model.t("Vurgu rengi", "Accent color"), selection: Binding(get: { Color(hex: model.preferences.accentHex) }, set: { model.preferences.accentHex = $0.hexString }), supportsOpacity: false)
+                    Spacer()
+                    Button(model.t("Varsayılana sıfırla", "Reset to default")) { model.preferences.resetAccent() }
+                        .controlSize(.small).disabled(model.preferences.accentHex.uppercased() == "D97757")
+                        .help(model.t("Vurgu rengini #D97757 turuncuya döndür", "Reset accent to #D97757 orange"))
+                        .accessibilityLabel(model.t("Vurgu rengini varsayılana sıfırla", "Reset accent color to default"))
+                }
                 Text(model.t("Tema ve cam seçimi birbirinden bağımsızdır. Şeffaflığı Azalt etkinse yüzeyler opaklaşır.", "Theme and material are independent. Reduce Transparency uses opaque surfaces."))
                     .font(.caption).foregroundStyle(Color(colors.secondary))
             }
@@ -268,6 +275,7 @@ struct SettingsView: View {
                         Text("Robot").tag(MascotKind.robot)
                     }.pickerStyle(.segmented)
                 }
+                HStack {
                 Picker(model.t("Maskot rengi", "Mascot color"), selection: Binding(get: { model.preferences.selectedMascotColor.mode }, set: { mode in
                     var color = model.preferences.selectedMascotColor; color.mode = mode
                     model.preferences.mascotColors[model.preferences.mascot.rawValue] = color
@@ -275,11 +283,18 @@ struct SettingsView: View {
                     Text(model.t("Uygulama rengini izle", "Follow app accent")).tag(MascotColorMode.accent)
                     Text(model.t("Özel renk", "Custom color")).tag(MascotColorMode.custom)
                 }
+                    Spacer()
+                    if model.preferences.selectedMascotColor.mode == .accent { resetMascotColorButton }
+                }
                 if model.preferences.selectedMascotColor.mode == .custom {
+                    HStack {
                     ColorPicker(model.t("Karakter rengi", "Character color"), selection: Binding(get: { Color(hex: model.preferences.selectedMascotColor.hex) }, set: { value in
                         var color = model.preferences.selectedMascotColor; color.hex = value.hexString
                         model.preferences.mascotColors[model.preferences.mascot.rawValue] = color
                     }), supportsOpacity: false)
+                    Spacer()
+                    resetMascotColorButton
+                    }
                 }
                 Picker(model.t("Gösterim", "Show"), selection: $model.preferences.companionVisibility) {
                     Text(model.t("Ada + maskot", "Island + mascot")).tag(CompanionVisibility.both)
@@ -298,10 +313,14 @@ struct SettingsView: View {
                 Button(model.t("Oturum panelini aç", "Open activity panel")) { model.showSessions?() }
             }
             group {
-                Picker(model.t("Ada ekranı", "Island display"), selection: $model.preferences.displayID) {
+                Picker(model.t("Ada ekranı", "Island display"), selection: Binding(get: { model.preferences.displayID }, set: { id in
+                    var prefs = model.preferences; prefs.displayID = id; prefs.islandPlacement = .init(); model.preferences = prefs
+                })) {
                     Text(model.t("Otomatik · MacBook, yoksa ana ekran", "Automatic · built-in, otherwise main")).tag(UInt32(0))
                     ForEach(NSScreen.screens, id: \.displayIdentifier) { screen in Text(screen.localizedName).tag(screen.displayIdentifier) }
                 }
+                Button(model.t("Adayı üst ortaya sıfırla", "Reset island to top center")) { model.resetIslandPosition?() }
+                    .help(model.t("Kaydedilen sürükleme konumunu sıfırla", "Reset the saved drag position"))
                 Toggle(model.t("Adayı tam ekran uygulamaların üzerinde göster", "Show island over full-screen apps"), isOn: $model.preferences.showOverFullscreen)
                 HStack {
                     Text(model.t("Oturum kısayolu", "Session shortcut"))
@@ -312,6 +331,12 @@ struct SettingsView: View {
                 Text(model.t("Command, Control veya Option içeren bir kısayol seç. Reduce Motion sistemden uygulanır.", "Choose a shortcut with Command, Control or Option. Reduce Motion follows your system.")).font(.caption).foregroundStyle(Color(colors.secondary))
             }
         }
+    }
+    private var resetMascotColorButton: some View {
+        Button(model.t("Varsayılana sıfırla", "Reset to default")) { model.preferences.resetSelectedMascotColor() }
+            .controlSize(.small).disabled(model.preferences.mascotColors[model.preferences.mascot.rawValue] == nil)
+            .help(model.t("Seçili karakter uygulama rengini izlesin", "Let the selected character follow the app accent"))
+            .accessibilityLabel(model.t("Seçili karakter rengini varsayılana sıfırla", "Reset selected character color to default"))
     }
     private var integration: some View {
         VStack(alignment: .leading, spacing: 18) {

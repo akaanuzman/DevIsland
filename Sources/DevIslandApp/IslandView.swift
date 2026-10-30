@@ -45,14 +45,25 @@ extension SessionState {
 @MainActor final class IslandPresentation: ObservableObject {
     @Published var mode: IslandMode = .compact
     @Published var bodyMode: IslandMode = .compact
-    @Published var geometry = IslandGeometry(width: 180, height: 36, radius: 18)
+    @Published var geometry = IslandGeometry(width: 352, height: 36, radius: 18)
     @Published var sessionID: String?
     @Published var safeTop: CGFloat = 36
     @Published var notchWidth: CGFloat = 0
     @Published var visible = false
+    @Published var attachedToTop = true
+    @Published var expandsUpward = false
+    @Published var headerWidth: CGFloat = 352
+    @Published var headerOffset: CGFloat = 0
     var hover: ((Bool) -> Void)?
     var toggle: (() -> Void)?
     var collapse: (() -> Void)?
+    var dragBegan: (() -> Void)?
+    var dragChanged: ((CGPoint) -> Void)?
+    var dragEnded: (() -> Void)?
+    var dragCancelled: (() -> Void)?
+    var resetPosition: (() -> Void)?
+    var pinToTop: (() -> Void)?
+    var pinTitle = "Pin to top"
 }
 struct IslandView: View {
     @Environment(\.colorScheme) private var systemScheme
@@ -63,57 +74,84 @@ struct IslandView: View {
     @Environment(\.snapshotPreview) private var snapshot
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                CompanionView(model: model, size: 30, active: presentation.visible)
-                Spacer(minLength: presentation.notchWidth + 8)
-                HStack(spacing: 5) {
-                    Text("\(model.waitingCount > 0 ? model.waitingCount : model.runningCount)")
-                        .font(.system(size: 12, weight: .medium)).monospacedDigit()
-                    Image(systemName: model.waitingCount > 0 ? "bell.badge.fill" : "circle.dotted")
-                        .font(.system(size: 11))
-                }.foregroundStyle(Color(colors.accent))
-            }
-            .padding(.horizontal, 18).frame(height: presentation.safeTop)
-            .contentShape(Rectangle()).onTapGesture { presentation.toggle?() }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(model.t("Dev Island. \(model.waitingCount) bekleyen, \(model.runningCount) çalışan oturum.", "Dev Island. \(model.waitingCount) need attention, \(model.runningCount) working."))
-            .accessibilityAddTraits(.isButton).accessibilityAction { presentation.toggle?() }
-
-            Group {
-                switch presentation.bodyMode {
-                case .compact: EmptyView()
-                case .alert: IslandAlertBody(model: model, sessionID: presentation.sessionID, close: { presentation.collapse?() }, showAll: { presentation.toggle?() })
-                case .expanded: SessionTrayView(model: model, close: { presentation.collapse?() })
-                }
-            }
-            .frame(width: presentation.geometry.width, height: max(0, presentation.geometry.height - presentation.safeTop), alignment: .top)
-            .allowsHitTesting(presentation.mode != .compact)
-            .accessibilityHidden(presentation.mode == .compact)
-            .opacity(presentation.geometry.contentOpacity)
-            .offset(y: reduceMotion ? 0 : (1 - presentation.geometry.contentOpacity) * -6)
-            .clipped()
+            if presentation.expandsUpward { surfaceBody }
+            header
+            if !presentation.expandsUpward { surfaceBody }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .islandSurface(model.preferences, radius: presentation.geometry.radius)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: presentation.expandsUpward ? .bottom : .top)
+        .islandSurface(model.preferences, radius: presentation.geometry.radius, attachedToTop: presentation.attachedToTop)
         .appTheme(model.preferences)
-        .onHover { presentation.hover?($0) }
         .onExitCommand { presentation.collapse?() }
+    }
+    private var header: some View {
+        let session = model.islandSession(alertSessionID: presentation.mode == .alert ? presentation.sessionID : nil)
+        let name = session.map { model.sessionPresentation(for: $0).name } ?? "Claude Code"
+        let nameWidth = IslandHeaderLayout.nameWidth(header: presentation.headerWidth, notch: presentation.notchWidth, detached: !presentation.attachedToTop)
+        return HStack(spacing: 0) {
+            HStack(spacing: 8) {
+                if let session {
+                    SessionMascotView(model: model, session: session, size: 30, active: presentation.visible)
+                } else {
+                    CompanionView(model: model, size: 30, active: presentation.visible).accessibilityHidden(true)
+                }
+                Text(name).font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color(colors.primary)).lineLimit(1).truncationMode(.tail)
+                    .frame(width: nameWidth, alignment: .leading)
+            }
+            .frame(width: presentation.notchWidth > 0 ? max(0, (presentation.headerWidth - presentation.notchWidth) / 2 - 18) : nil, alignment: .leading)
+            if presentation.notchWidth > 0 { Color.clear.frame(width: presentation.notchWidth) }
+            Spacer(minLength: 8)
+            HStack(spacing: 5) {
+                Text("\(model.waitingCount > 0 ? model.waitingCount : model.runningCount)")
+                    .font(.system(size: 12, weight: .medium)).monospacedDigit()
+                Image(systemName: model.waitingCount > 0 ? "bell.badge.fill" : "circle.dotted").font(.system(size: 11))
+            }.foregroundStyle(Color(colors.accent)).frame(width: 42, alignment: .trailing)
+        }
+        .padding(.trailing, presentation.attachedToTop ? 0 : 28)
+        .padding(.horizontal, 18).frame(width: presentation.headerWidth, height: presentation.safeTop)
+        .overlay { if !snapshot { IslandHeaderInput(presentation: presentation, resetTitle: model.t("Üst ortaya sıfırla", "Reset to top center")) } }
+        .overlay(alignment: .trailing) {
+            if snapshot && !presentation.attachedToTop {
+                Image(systemName: "pin.fill").font(.system(size: 12)).foregroundStyle(Color(colors.secondary)).frame(width: 24, height: 24).padding(.trailing, 16)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading).offset(x: presentation.headerOffset)
+        .help(model.t("Oturumları açmak için tıkla, taşımak için sürükle. Sağ tıkla konumu sıfırla.", "Click for sessions, drag to move. Right-click to reset position."))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(model.t("Dev Island. \(name). \(session.map { model.title($0.state) } ?? ""). \(model.waitingCount) bekleyen, \(model.runningCount) çalışan oturum.", "Dev Island. \(name). \(session.map { model.title($0.state) } ?? ""). \(model.waitingCount) need attention, \(model.runningCount) working."))
+        .accessibilityAddTraits(.isButton).accessibilityAction { presentation.toggle?() }
+        .accessibilityAction(named: Text(model.t("Üste sabitle", "Pin to top"))) { presentation.pinToTop?() }
+    }
+    private var surfaceBody: some View {
+        Group {
+            switch presentation.bodyMode {
+            case .compact: EmptyView()
+            case .alert: IslandAlertBody(model: model, sessionID: presentation.sessionID, active: presentation.visible && presentation.mode == .alert, close: { presentation.collapse?() }, showAll: { presentation.toggle?() })
+            case .expanded: SessionTrayView(model: model, active: presentation.visible && presentation.mode == .expanded, close: { presentation.collapse?() })
+            }
+        }
+        .frame(width: presentation.geometry.width, height: max(0, presentation.geometry.height - presentation.safeTop), alignment: presentation.expandsUpward ? .bottom : .top)
+        .allowsHitTesting(presentation.mode != .compact).accessibilityHidden(presentation.mode == .compact)
+        .opacity(presentation.geometry.contentOpacity)
+        .offset(y: reduceMotion ? 0 : (1 - presentation.geometry.contentOpacity) * (presentation.expandsUpward ? 6 : -6))
+        .clipped()
     }
 }
 struct IslandAlertBody: View {
     @Environment(\.themeColors) private var colors
     @ObservedObject var model: AppModel
     var sessionID: String?
+    var active = false
     var close: () -> Void
     var showAll: () -> Void
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             if let id = sessionID, let session = model.ledger.sessions[id] {
                 HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: session.state.symbol).foregroundStyle(session.state.tint).font(.title3)
+                    SessionMascotView(model: model, session: session, size: 44, active: active)
                     VStack(alignment: .leading, spacing: 5) {
                         Text(model.title(session.state)).font(.system(size: 14, weight: .semibold))
-                        Text(model.preferences.hideProjects ? "Claude Code" : session.title).font(.system(size: 12)).foregroundStyle(Color(colors.secondary)).lineLimit(1)
+                        Text(model.sessionPresentation(for: session).name).font(.system(size: 12)).foregroundStyle(Color(colors.secondary)).lineLimit(1)
                     }
                     Spacer()
                     Button(action: close) { Image(systemName: "xmark").font(.system(size: 10, weight: .bold)) }
@@ -131,6 +169,7 @@ struct IslandAlertBody: View {
 struct SessionTrayView: View {
     @Environment(\.themeColors) private var colors
     @ObservedObject var model: AppModel
+    var active = false
     var close: () -> Void
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -162,7 +201,7 @@ struct SessionTrayView: View {
                     .frame(maxWidth: .infinity).padding(.vertical, 18)
             } else {
                 ForEach(model.sessions) { session in
-                    SessionRow(model: model, session: session, compact: true)
+                    SessionRow(model: model, session: session, compact: true, showsMascot: true, animationsActive: active)
                     if session.id != model.sessions.last?.id { Divider() }
                 }
             }
@@ -173,6 +212,8 @@ struct SessionRow: View {
     @ObservedObject var model: AppModel
     let session: AgentSession
     var compact = false
+    var showsMascot = false
+    var animationsActive = false
     @State private var hovered = false
     @Environment(\.themeColors) private var colors
     @State private var editingLabel = false
@@ -181,11 +222,15 @@ struct SessionRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center, spacing: 10) {
-                Image(systemName: session.state.symbol).font(.system(size: 15)).foregroundStyle(session.state.tint)
-                    .frame(width: 22, height: 24)
+                if showsMascot {
+                    SessionMascotView(model: model, session: session, size: 32, active: animationsActive)
+                } else {
+                    Image(systemName: session.state.symbol).font(.system(size: 15)).foregroundStyle(session.state.tint)
+                        .frame(width: 22, height: 24)
+                }
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text(model.preferences.hideProjects ? "Claude Code" : session.title).font(.system(size: 13, weight: .medium)).lineLimit(1)
+                        Text(model.sessionPresentation(for: session).name).font(.system(size: 13, weight: .medium)).lineLimit(1)
                         if session.muted { Image(systemName: "bell.slash.fill").font(.caption2).foregroundStyle(Color(colors.secondary)) }
                         if let until = session.snoozedUntil, until > Date() { Image(systemName: "clock.badge").font(.caption2).foregroundStyle(Color(colors.secondary)) }
                     }

@@ -66,17 +66,18 @@ struct DevIslandMark: View {
 struct IslandSurface: ViewModifier {
     let preferences: Preferences
     var radius: CGFloat = 24
+    var attachedToTop = false
+    private var shape: UnevenRoundedRectangle { UnevenRoundedRectangle(topLeadingRadius: attachedToTop ? 0 : radius, bottomLeadingRadius: radius, bottomTrailingRadius: radius, topTrailingRadius: attachedToTop ? 0 : radius) }
     @Environment(\.colorScheme) private var scheme
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.snapshotPreview) private var snapshot
     private var fill: Color { scheme == .dark ? Color(hex: "202020") : Color(hex: "F5F5F5") }
     func body(content: Content) -> some View {
         content.background { surface }
-            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(.primary.opacity(scheme == .dark ? 0.12 : 0.07), lineWidth: 0.5))
+            .clipShape(shape)
+            .overlay(shape.strokeBorder(.primary.opacity(scheme == .dark ? 0.12 : 0.07), lineWidth: 0.5))
     }
     @ViewBuilder private var surface: some View {
-        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         if reduceTransparency || preferences.surface == .opaque {
             shape.fill(fill)
         } else if snapshot {
@@ -85,7 +86,7 @@ struct IslandSurface: ViewModifier {
                 .overlay(shape.fill(preferences.accent.opacity(0.012)))
         } else if #available(macOS 26, *), preferences.surface == .liquid {
             shape.fill(.clear)
-                .glassEffect(preferences.glassStyle == .clear ? .clear : .regular, in: .rect(cornerRadius: radius))
+                .glassEffect(preferences.glassStyle == .clear ? .clear : .regular, in: shape)
                 .overlay(shape.fill(fill.opacity(0.72 + preferences.surfaceDensity * 0.25)))
         } else {
             shape.fill(.ultraThinMaterial)
@@ -95,8 +96,8 @@ struct IslandSurface: ViewModifier {
 }
 
 extension View {
-    func islandSurface(_ preferences: Preferences, radius: CGFloat = 24) -> some View {
-        modifier(IslandSurface(preferences: preferences, radius: radius))
+    func islandSurface(_ preferences: Preferences, radius: CGFloat = 24, attachedToTop: Bool = false) -> some View {
+        modifier(IslandSurface(preferences: preferences, radius: radius, attachedToTop: attachedToTop))
     }
 }
 

@@ -54,6 +54,7 @@ public struct Preferences: Codable {
     public var mascotHidden = false
     public var mascotSize: Double = 96
     public var mascotPlacement = MascotPlacement()
+    public var islandPlacement = IslandPlacement()
     public var seenCompletions: [String: Date] = [:]
     public var rules: [String: AlertRule] = [
         "question": .init(), "plan": .init(), "permission": .init(),
@@ -66,7 +67,7 @@ public struct Preferences: Codable {
         case reminders, hideProjects, showPreview, showOverFullscreen, displayID, preferredTerminal
         case shortcutKey, shortcutModifiers, shortcutLabel, retentionDays, rules
         case theme, surface, glassStyle, accentHex, surfaceDensity, companionVisibility, mascotHidden, mascotSize, mascotPlacement, seenCompletions
-        case appearanceVersion, mascot, mascotColors
+        case appearanceVersion, mascot, mascotColors, islandPlacement
     }
     public init(from decoder: Decoder) throws {
         self.init()
@@ -91,8 +92,11 @@ public struct Preferences: Codable {
         companionVisibility = read(.companionVisibility, companionVisibility); mascotHidden = read(.mascotHidden, mascotHidden)
         mascotSize = read(.mascotSize, mascotSize); mascotPlacement = read(.mascotPlacement, mascotPlacement)
         seenCompletions = read(.seenCompletions, seenCompletions)
+        islandPlacement = read(.islandPlacement, islandPlacement)
         volume = min(1, max(0, volume)); surfaceDensity = min(1, max(0, surfaceDensity)); mascotSize = min(160, max(64, mascotSize))
     }
+    public mutating func resetAccent() { accentHex = "D97757" }
+    public mutating func resetSelectedMascotColor() { mascotColors.removeValue(forKey: mascot.rawValue) }
     public func rule(for state: SessionState) -> AlertRule { rules[state.rawValue] ?? .init(island: false, notification: false, sound: false) }
     public func isQuiet(at date: Date = Date(), calendar: Calendar = .current) -> Bool {
         if quiet { return true }

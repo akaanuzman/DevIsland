@@ -1,6 +1,14 @@
 import SwiftUI
 import DevIslandCore
 
+private struct MascotSampleTimeKey: EnvironmentKey { static let defaultValue: Double? = nil }
+extension EnvironmentValues {
+    var mascotSampleTime: Double? {
+        get { self[MascotSampleTimeKey.self] }
+        set { self[MascotSampleTimeKey.self] = newValue }
+    }
+}
+
 /// Native pixel geometry, with no runtime downloads, web view, or third-party animation engine.
 struct ClawdView: View {
     let pose: ClawdPose
@@ -15,13 +23,15 @@ struct ClawdView: View {
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     private var reduceMotion: Bool { motionOverride ?? systemReduceMotion }
     @Environment(\.snapshotPreview) private var snapshot
+    @Environment(\.mascotSampleTime) private var previewTime
+    private var sampledTime: Double? { sampleTime ?? previewTime }
     @State private var transientSettled = false
     @State private var poseStarted = Date()
     var body: some View {
         TimelineView(.animation(minimumInterval: pose == .idle ? 0.25 : 1.0 / 15.0, paused: !active || reduceMotion || snapshot || pose == .disconnected || ([ClawdPose.failed, .plan].contains(pose) && transientSettled))) { timeline in
             Canvas { context, frame in
-                let elapsed = reduceMotion ? 0 : (sampleTime ?? (snapshot ? 0 : timeline.date.timeIntervalSinceReferenceDate))
-                draw(context: &context, frame: frame, time: elapsed, age: sampleTime ?? Date().timeIntervalSince(poseStarted))
+                let elapsed = reduceMotion ? 0 : (sampledTime ?? (snapshot ? 0 : timeline.date.timeIntervalSinceReferenceDate))
+                draw(context: &context, frame: frame, time: elapsed, age: sampledTime ?? Date().timeIntervalSince(poseStarted))
             }
         }
         .frame(width: size, height: size)
@@ -41,7 +51,7 @@ struct ClawdView: View {
         context.scaleBy(x: scale, y: scale)
         if pose == .failed && age < 0.65 && !reduceMotion { context.translateBy(x: (sin(age * 30) * (1 - age / 0.65)).rounded(), y: 0) }
         let phase = time * 4
-        let celebrateTime = sampleTime ?? celebrationStarted.map { max(0, Date().timeIntervalSince($0)) } ?? 0.4
+        let celebrateTime = sampledTime ?? celebrationStarted.map { max(0, Date().timeIntervalSince($0)) } ?? 0.4
         let jump = pose == .celebration && !reduceMotion ? -abs(sin(min(1, celebrateTime / 1.2) * .pi * 2)) * 3 : 0
         let bob = pose == .working ? sin(phase) * 0.6 : (pose == .idle ? sin(time * 1.6) * 0.55 : 0)
         let y = (jump + bob).rounded(.toNearestOrAwayFromZero)
@@ -67,7 +77,14 @@ struct ClawdView: View {
         case .cat:
             box(9, 7, 2, 3, highlight); box(21, 7, 2, 3, highlight)
             box(11, eyeTop, 2, blink ? 1 : 2, eye); box(19, eyeTop, 2, blink ? 1 : 2, eye)
-            box(15, 17, 2, 1, eye); box(14, 18, 1, 1, eye); box(17, 18, 1, 1, eye)
+            box(15, 17, 2, 1, eye)
+            if pose == .failed || pose == .disconnected {
+                box(14, 19, 4, 1, eye)
+            } else {
+                // Upturned corners and a low center form a smile, rather than an inverted V.
+                box(13, 18, 1, 1, eye); box(18, 18, 1, 1, eye); box(14, 19, 4, 1, eye)
+                if !blink { box(11, eyeTop, 1, 1, highlight); box(19, eyeTop, 1, 1, highlight) }
+            }
             box(8, 18, 4, 1, shadow); box(20, 18, 4, 1, shadow)
             box(11, 23, 3, 3, highlight); box(18, 23, 3, 3, highlight)
         case .robot:
@@ -135,6 +152,22 @@ struct ClawdContactSheet: View {
                 }
             }
         }
+    }
+}
+
+/// Each surface supplies its own session; global priority must not leak into another row.
+struct SessionMascotView: View {
+    @ObservedObject var model: AppModel
+    let session: AgentSession
+    var size: CGFloat = 32
+    var active = false
+    var body: some View {
+        let presentation = model.sessionPresentation(for: session)
+        ClawdView(pose: presentation.pose, kind: model.preferences.mascot,
+                  bodyHex: model.preferences.mascotHex, size: size,
+                  active: active && model.visualsAwake,
+                  celebrationStarted: presentation.celebrationStarted)
+            .accessibilityHidden(true) // The adjacent session/status labels provide the localized meaning.
     }
 }
 

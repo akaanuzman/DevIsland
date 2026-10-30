@@ -4,7 +4,7 @@ import Darwin
 
 // This observer must never decide permissions, print JSON, or block Claude on a failure.
 if CommandLine.arguments.contains("--version") {
-    print("Dev Island Bridge 0.3.0")
+    print("Dev Island Bridge 0.3.3")
     exit(0)
 }
 if CommandLine.arguments.contains("--claude-hook") {

@@ -68,7 +68,7 @@ struct MascotTrayView: View {
                 Spacer()
                 if model.waitingCount > 0 { Text("\(model.waitingCount)").font(.system(size: 12, weight: .bold)).foregroundStyle(Color(colors.accent)) }
             }.padding(.horizontal, 18).padding(.top, 14)
-            SessionTrayView(model: model, close: close)
+            SessionTrayView(model: model, active: model.mascotTrayVisible, close: close)
         }
         .islandSurface(model.preferences, radius: 26)
         .appTheme(model.preferences)

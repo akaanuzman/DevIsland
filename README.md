@@ -2,11 +2,33 @@
 
 Claude Code oturumlarını izleyen, yerel çalışan macOS menü çubuğu uygulaması. Soru, plan ve izin bekleme durumlarını çentiğin yanında açılan bir ada, sistem bildirimi ve isteğe bağlı seslerle gösterir.
 
-**Durum:** v0.3.0 yerel alfa. Dağıtılabilir beta kabulü için Developer ID/notarization, ikinci Mac ve gerçek terminal senaryolarının tamamlanması gerekir. Clawd, Kedi ve Robot maskotları bu sürüme dahildir; mobil push sonraki fazdadır.
+**Durum:** v0.3.4 yerel alfa. Dağıtılabilir beta kabulü için Developer ID/notarization, ikinci Mac ve gerçek terminal senaryolarının tamamlanması gerekir. Clawd, Kedi ve Robot maskotları bu sürüme dahildir; mobil push sonraki fazdadır.
+
+## v0.3.4: oturum adı ve durum maskotları
+
+Kompakt başlık öncelikli oturumun etiketini (yoksa proje adını) gösterir. Bildirim açıldığında başlıktaki ad ve maskot o bildirimin oturumuna geçer. Uzun adlar sabit alanda kısalır; kamera alanı boş ve kompakt yükseklik sabit kalır.
+
+Bildirim kartında 44 pt, açılan oturum listesinde 32 pt maskot her oturumun kendi durumunu izler. Seçilen karakter ve renk paylaşılır. Kutlama yalnızca canlı tamamlanma olayında, bütün yüzeylerde aynı başlangıç saatiyle oynar; paneli yeniden açmak tekrarlatmaz. Proje gizleme adı “Claude Code” yapar. Kapalı yüzeylerde ve uyku sırasında animasyon saati durur; Reduce Motion sabit poz kullanır. Ayarlar listesindeki sade ikonlar korunur.
+
+## v0.3.3: üst konum giriş düzeltmesi
+
+Yalnızca üstteyken hover/tıklamanın çalışmaması için pencere seviyesi düzeltildi. Çentikli ekranda kameranın altında küçük bir etkileşim şeridi bulunur; sistem alanındaki mouse olayları için dar kapsamlı fallback eklenir. Serbest sürükleme davranışı korunur. Ayrıntılar [V033_FIX](docs/V033_FIX.md) içindedir.
+
+**Güncelleme:** Önce menü çubuğundaki Dev Island → Çık eylemini kullan, sonra yeni uygulamayı aç. Eski arka plan süreci kapanmadan yeni kopyayı açmak sürümü değiştirmeyebilir.
+
+## Üst sabitleme ve hover
+
+Sürüklenen adanın sağındaki **pin** düğmesi, adayı üst ortaya sabitler. Düğme yalnızca serbest konumda görünür. Üstteyken üzerine gelince büyür; dışına çıkınca küçülür. Tıklayarak açılan liste, yeniden tıklayana veya Escape’e basana kadar açık kalır. Hover, başka uygulama odaktayken de izlenir.
+
+## Üst kenar, sürükleme ve sıfırlama
+
+Ada varsayılan olarak ekranın fiziksel üst ortasına yapışır. Başlığından sürükleyip bırak; konum yeniden açılışta korunur. Ekranın altına bırakıldığında oturum paneli yukarı açılır. Üst ortaya yakın bırakmak, başlığa sağ tıklamak veya Görünüm → Adayı üst ortaya sıfırla eylemi varsayılan konuma döndürür. Ekran değişirse ada görünür alanda kalır.
+
+Görünüm’de vurgu ve karakter rengi için ayrı Varsayılana sıfırla düğmeleri bulunur. Vurgu turuncuya (#D97757), seçili karakter uygulama rengini izlemeye döner. Diğer karakter renkleri ve ayarlar korunur. Kedinin normal pozları artık hafif gülümser.
 
 ## v0.3: kompakt ada, yerel tasarım ve üç maskot
 
-Ana kaynak proje /Users/kaanuzman/Desktop/dev/DevIsland içindedir. Sohbetin outputs/DevIsland-v0.3 klasörü yalnızca yayın paketleri, önizlemeler ve doküman teslimidir.
+Ana kaynak proje /Users/kaanuzman/Desktop/dev/DevIsland içindedir. Sohbetin outputs/DevIsland-v0.3.4 klasörü yalnızca yayın paketleri, önizlemeler ve doküman teslimidir.
 
 **Görünüm** bölümünde Sistem/Açık/Koyu tema ve Liquid Glass/Buzlu cam/Opak yüzey ayrı seçilir. macOS 26 gerçek Liquid Glass kullanır; macOS 14/15 buzlu cam karşılığını gösterir. Cam stili, zemin yoğunluğu ve vurgu rengi ayarlanabilir. Reduce Transparency opak yüzeye, Reduce Motion hareketsiz maskot pozlarına ve kısa geçişlere dönüşür.
 
@@ -27,7 +49,7 @@ bash scripts/build-app.sh
 open "dist/Dev Island.app"
 ```
 
-Paketlenmiş uygulama `dist/Dev Island.app`, arşiv `dist/Dev-Island-0.3.0-arm64.zip` altında oluşur. Yerel derleme ad-hoc imzalıdır; başka Mac’lere dağıtım için `scripts/notarize.sh` kullanılır. Finder’da Applications’a taşındıktan sonra hook kurulumu yapılması önerilir. Köprü sabit bir kullanıcı veri dizinine kopyalandığı için uygulama güncellemesi hook komutunu değiştirmez.
+Paketlenmiş uygulama `dist/Dev Island.app`, arşiv `dist/Dev-Island-0.3.4-arm64.zip` altında oluşur. Yerel derleme ad-hoc imzalıdır; başka Mac’lere dağıtım için `scripts/notarize.sh` kullanılır. Finder’da Applications’a taşındıktan sonra hook kurulumu yapılması önerilir. Köprü sabit bir kullanıcı veri dizinine kopyalandığı için uygulama güncellemesi hook komutunu değiştirmez.
 
 İlk açılışta **Hook’ları incele ve bağlan** ile eklenecek kayıtları gör. Kurulum mevcut Claude ayarlarını yedekleyerek korur. Mevcut Claude oturumlarını yeniden başlat, bir prompt gönder ve oturumun listede göründüğünü doğrula. Bildirim izni **Bildirimler ve ses** bölümünden verilir. Girişte başlatma varsayılan kapalıdır.
 
@@ -92,4 +114,4 @@ bash scripts/notarize.sh
 
 Sertifika ve notarytool profili bu repoya eklenmez. Yayın script’i nested köprüyü ve uygulamayı hardened runtime ile imzalar, Apple’a gönderir, bileti staple eder, DMG oluşturur ve DMG’yi doğrular.
 
-v0.3 kapsamı: [V03_PLAN](docs/V03_PLAN.md). Önceki v0.2 tema/animasyon/maskot kararları: [V02_PLAN](docs/V02_PLAN.md). Ürün/mimari kararları: [PLAN](docs/PLAN.md). Gelecek fazlar: [ROADMAP](docs/ROADMAP.md). Doğrulama ve kalan kabul işleri: [VALIDATION](docs/VALIDATION.md).
+v0.3.4 sunumu: [V034](docs/V034_SESSION_MASCOTS.md). v0.3.3 düzeltmesi: [V033_FIX](docs/V033_FIX.md). Önceki kapsam: [V032_PLAN](docs/V032_PLAN.md). Önceki sürüm: [V031_PLAN](docs/V031_PLAN.md). Önceki v0.3 kapsamı: [V03_PLAN](docs/V03_PLAN.md). Önceki v0.2 tema/animasyon/maskot kararları: [V02_PLAN](docs/V02_PLAN.md). Ürün/mimari kararları: [PLAN](docs/PLAN.md). Gelecek fazlar: [ROADMAP](docs/ROADMAP.md). Doğrulama ve kalan kabul işleri: [VALIDATION](docs/VALIDATION.md).

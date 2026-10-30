@@ -63,3 +63,10 @@ Kaynaklar: [Pushover API](https://pushover.net/api), [Pushover fiyatlandırma](h
 - SSH, tmux, uzak Claude oturumları; oturum sahibine dönüş protokolü.
 - Diğer ajanlar için sağlayıcı adaptörleri; izin ve tamamlanma sözleşmelerini ayrı doğrula.
 - İmzalı otomatik güncelleme kanalı ve geri alma.
+
+## v0.3.1 — eklenen yerel etkileşimler
+
+Üst kenara yapışan ada; kalıcı sürükle-bırak konumu, yukarı açılan panel, varsayılan konuma dönüş, gülümseyen kedi ve ayrı renk sıfırlama eylemleri kaynakta eklendi. Fiziksel ekran/LaunchServices engeli nedeniyle canlı kabul VALIDATION.md üzerinden ayrıca izlenir.
+
+### v0.3.4 — oturum sunumu
+Kompakt oturum adı, bildirim ve oturum satırlarında oturuma özgü animasyonlu maskotlar eklendi. Hook ve kalıcı tercih şeması korunur. Fiziksel ekran/pointer, Focus, gerçek terminal senaryoları ve Instruments ölçümü dağıtılabilir beta kabulüne dahildir.

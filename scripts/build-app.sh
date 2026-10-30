@@ -33,6 +33,6 @@ else
     codesign --force --options runtime --timestamp --sign "$identity" --entitlements Resources/DevIsland.entitlements "$app"
 fi
 codesign --verify --deep --strict "$app"
-ditto -c -k --sequesterRsrc --keepParent "$app" dist/Dev-Island-0.3.0-arm64.zip
+ditto -c -k --sequesterRsrc --keepParent "$app" dist/Dev-Island-0.3.4-arm64.zip
 echo "Built: $app"
 if [ "$identity" = "-" ]; then echo "Local ad-hoc signature. Developer ID signing and notarization are still required for public distribution."; fi

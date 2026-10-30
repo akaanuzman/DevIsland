@@ -37,13 +37,36 @@ func launchTrace(_ stage: String) {
                         let name = theme.rawValue + "-" + surface.rawValue
                         let presentation = IslandPresentation(); presentation.mode = .expanded; presentation.bodyMode = .expanded
                         let height = 36 + PanelSizing.height(of: SessionTrayView(model: model, close: {}).appTheme(model.preferences), width: 460, maximum: 520)
+                        presentation.headerOffset = 54
                         presentation.geometry = .init(width: 460, height: height, radius: 26, contentOpacity: 1)
                         try snapshot(IslandView(model: model, presentation: presentation).frame(width: 460, height: height).environment(\.colorScheme, scheme), to: destination.appendingPathComponent("island-\(name).png"))
                         let trayHeight = PanelSizing.height(of: MascotTrayView(model: model, close: {}), width: 400, maximum: 580)
                         try snapshot(MascotTrayView(model: model, close: {}).frame(width: 400, height: trayHeight).environment(\.colorScheme, scheme), to: destination.appendingPathComponent("companion-\(name).png"))
                     }
                     let compact = IslandPresentation()
-                    try snapshot(IslandView(model: model, presentation: compact).frame(width: 180, height: 36).environment(\.colorScheme, scheme), to: destination.appendingPathComponent("compact-\(theme.rawValue).png"))
+                    try snapshot(IslandView(model: model, presentation: compact).frame(width: 352, height: 36).environment(\.colorScheme, scheme), to: destination.appendingPathComponent("compact-\(theme.rawValue).png"))
+                    let notched = IslandPresentation(); notched.safeTop = 44; notched.headerWidth = 542; notched.notchWidth = 190
+                    notched.geometry = .init(width: 542, height: 44, radius: 18)
+                    try snapshot(IslandView(model: model, presentation: notched).frame(width: 542, height: 44).environment(\.colorScheme, scheme), to: destination.appendingPathComponent("notched-input-\(theme.rawValue).png"))
+                    let floating = IslandPresentation(); floating.attachedToTop = false
+                    try snapshot(IslandView(model: model, presentation: floating).frame(width: 352, height: 36).environment(\.colorScheme, scheme), to: destination.appendingPathComponent("floating-compact-\(theme.rawValue).png"))
+                }
+                // Session-specific cards and in-context animation samples use the same production views.
+                for theme in [ThemeMode.light, .dark] {
+                    model.preferences.theme = theme; model.preferences.surface = .opaque
+                    for kind in MascotKind.allCases {
+                        model.preferences.mascot = kind
+                        for state in [SessionState.question, .running, .plan, .permission, .completed, .failed, .disconnected] {
+                            model.ledger.sessions["preview-cookify"]?.state = state
+                            let p = IslandPresentation(); p.mode = .alert; p.bodyMode = .alert; p.sessionID = "preview-cookify"
+                            p.headerOffset = 54
+                            let height = 36 + PanelSizing.height(of: IslandAlertBody(model: model, sessionID: p.sessionID, close: {}, showAll: {}).appTheme(model.preferences), width: 460, maximum: 520)
+                            p.geometry = .init(width: 460, height: height, contentOpacity: 1)
+                            try snapshot(IslandView(model: model, presentation: p).frame(width: 460, height: height), to: destination.appendingPathComponent("alert-\(theme.rawValue)-\(kind.rawValue)-\(state.rawValue).png"))
+                        }
+                        model.ledger.sessions["preview-cookify"]?.state = .question
+                        try renderSessionGIF(model: model, to: destination.appendingPathComponent("sessions-\(theme.rawValue)-\(kind.rawValue).gif"))
+                    }
                 }
                 model.preferences.surface = .liquid
                 for (kind, hex) in [(MascotKind.cat, "7EB4DA"), (.robot, "9B87C8")] {
@@ -52,16 +75,28 @@ func launchTrace(_ stage: String) {
                     try nativeSnapshot(SettingsView(model: model, initialPage: .appearance).frame(width: 920, height: 1020), dark: true, to: destination.appendingPathComponent("custom-\(kind.rawValue)-settings.png"))
                     let p = IslandPresentation(); p.mode = .expanded; p.bodyMode = .expanded
                     let height = 36 + PanelSizing.height(of: SessionTrayView(model: model, close: {}).appTheme(model.preferences), width: 460, maximum: 520)
+                    p.headerOffset = 54
                     p.geometry = .init(width: 460, height: height, radius: 26, contentOpacity: 1)
                     try snapshot(IslandView(model: model, presentation: p).frame(width: 460, height: height), to: destination.appendingPathComponent("custom-\(kind.rawValue)-island.png"))
                 }
+                model.preferences.mascot = .cat
+                model.preferences.mascotColors.removeValue(forKey: "cat")
+                model.companion = .init(pose: .idle, state: .idle)
+                try snapshot(DesktopMascotView(model: model, active: false).padding(16), to: destination.appendingPathComponent("cat-desktop-idle.png"))
+                let happy = IslandPresentation()
+                try snapshot(IslandView(model: model, presentation: happy).frame(width: 352, height: 36), to: destination.appendingPathComponent("cat-island-idle.png"))
+                let upward = IslandPresentation(); upward.mode = .expanded; upward.bodyMode = .expanded
+                upward.attachedToTop = false; upward.expandsUpward = true; upward.headerOffset = 0
+                let upwardHeight = 36 + PanelSizing.height(of: SessionTrayView(model: model, close: {}).appTheme(model.preferences), width: 460, maximum: 520)
+                upward.geometry = .init(width: 460, height: upwardHeight, radius: 26, contentOpacity: 1)
+                try snapshot(IslandView(model: model, presentation: upward).frame(width: 460, height: upwardHeight), to: destination.appendingPathComponent("island-floating-upward.png"))
                 for kind in MascotKind.allCases {
                     try snapshot(ClawdContactSheet(kind: kind).frame(width: 640, height: 320).background(Color(hex: "F5F5F5")), to: destination.appendingPathComponent("\(kind.rawValue)-states.png"))
                     for pose in ClawdPose.allCases { try renderGIF(kind: kind, pose: pose, to: destination.appendingPathComponent("\(kind.rawValue)-\(pose.rawValue).gif")) }
                 }
                 try snapshot(MascotColorSheet().background(Color(hex: "F5F5F5")), to: destination.appendingPathComponent("mascot-colors.png"))
                 try snapshot(DevIslandMark(size: 256).padding(32).background(Color(hex: "F5F5F5")), to: destination.appendingPathComponent("monogram.png"))
-                print("Rendered 12 native settings pages, 12 material panels, 2 compact islands, 4 custom character previews, 3 pose sheets, color sheet, monogram and 24 mascot animation samples.")
+                print("Rendered 12 native settings pages, 12 material panels, 2 compact islands, 4 custom character previews, 3 pose sheets, color sheet, monogram and 24 mascot animation samples, 42 session alert cards and 6 in-context session animations.")
                 return
             } catch { FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8)); exit(1) }
         }
@@ -117,6 +152,21 @@ func launchTrace(_ stage: String) {
             throw CocoaError(.fileWriteUnknown)
         }
         try data.write(to: destination)
+    }
+    @MainActor private static func renderSessionGIF(model: AppModel, to destination: URL) throws {
+        let p = IslandPresentation(); p.mode = .expanded; p.bodyMode = .expanded; p.headerOffset = 54
+        let height = 36 + PanelSizing.height(of: SessionTrayView(model: model, close: {}).appTheme(model.preferences), width: 460, maximum: 520)
+        p.geometry = .init(width: 460, height: height, contentOpacity: 1)
+        guard let gif = CGImageDestinationCreateWithURL(destination as CFURL, "com.compuserve.gif" as CFString, 16, nil) else { throw CocoaError(.fileWriteUnknown) }
+        CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        for frame in 0..<16 {
+            let renderer = ImageRenderer(content: IslandView(model: model, presentation: p).frame(width: 460, height: height)
+                .environment(\.snapshotPreview, true).environment(\.mascotSampleTime, Double(frame) * 0.1))
+            renderer.scale = 2
+            guard let image = renderer.cgImage else { throw CocoaError(.fileWriteUnknown) }
+            CGImageDestinationAddImage(gif, image, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.1]] as CFDictionary)
+        }
+        guard CGImageDestinationFinalize(gif) else { throw CocoaError(.fileWriteUnknown) }
     }
     @MainActor private static func renderGIF(kind: MascotKind, pose: ClawdPose, to destination: URL) throws {
         guard let gif = CGImageDestinationCreateWithURL(destination as CFURL, "com.compuserve.gif" as CFString, 16, nil) else { throw CocoaError(.fileWriteUnknown) }
@@ -184,7 +234,7 @@ func launchTrace(_ stage: String) {
         if !model.defaults.bool(forKey: "onboarded") || CommandLine.arguments.contains("--show-settings") { openSettings() }
         if CommandLine.arguments.contains("--demo") { island.expand() }
     }
-    func applicationWillTerminate(_ notification: Notification) { model?.stop() }
+    func applicationWillTerminate(_ notification: Notification) { island?.stop(); model?.stop() }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { openSettings(); return true }
     private func updateShortcut() {
         guard shortcut != nil else { return }

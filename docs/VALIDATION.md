@@ -1,47 +1,17 @@
-# Dev Island v0.3 — doğrulama kaydı
+# Dev Island v0.3.4 — doğrulama
 
-Tarih: 30 Ekim 2026, Europe/Istanbul. Ana kaynak: /Users/kaanuzman/Desktop/dev/DevIsland.
+88 XCTest: 87 başarılı, fiziksel NSScreen gerektiren 1 test atlandı, 0 hata. Önceki 81 test korunur; oturum sunumu için 7 test eklenir. Yeni çoklu oturum durum/isim/gizlilik, gerçek tamamlanma saati ve tekrar teslim, render, başlık geometri testleri geçti. Mevcut sürükleme, pin, native hitTest, hover, kesilebilir geçiş, tema, tercihler, 3 karakter ve Reduce Motion testleri de geçti.
 
-## Otomatik kontroller
+Apple Silicon release derlemesi, paket köprüsü, ad-hoc codesign --verify --deep --strict ve ZIP bütünlüğü doğrulandı. Gerçek Unix socket smoke testi: 10 eşzamanlı oturum, uygulama kapalıyken fail-open, sessiz exit 0, sınırlı/malformed girdi, 0600 dosyalar ve disk kuyruğunda prompt/soru saklanmaması geçti. Sonuçlar BRIDGE.json içindedir. SwiftData round-trip, çözülmemiş beklemenin saklanması ve önizleme metninin kalıcılaşmaması geçti (STORAGE.txt).
 
-**55 XCTest, 0 hata.** Önceki 40 test korunur; yeni kapsam:
+84 PNG ve 30 GIF üretildi. Açık/koyu kompakt ada, çentik kanatları, açılmış liste ve karakterli bildirim kartları görsel olarak kontrol edildi. 6 oturum listesi GIF’inde 16 kareden 10’u farklıdır. Bunlar deterministik render örnekleridir; fiziksel canlı animasyon testi olarak sayılmaz.
 
-- Eski varsayılan turuncuya taşınır, diğer özel renkler ve bildirim/terminal ayarları korunur. v3’te özellikle seçilen eski teal sonraki açılışta değiştirilmez.
-- Clawd/Kedi/Robot seçimi, karakter başına renk ve uygulama rengini izleme JSON round-trip ile doğrulanır. Bilinmeyen karakter eski ayarları silmez.
-- Açık/koyu içerik yüzeylerinde birincil, ikincil ve türetilmiş vurgu metni en az 4,5:1 kontrast verir. Siyah, beyaz, sarı, yeşil ve özel renkler test edilir. Ham dolgu üzerinde karşıt açık/koyu yazı seçilir. Bu, gerçek masaüstü camının her olası arka planında ölçüm yapıldığı anlamına gelmez.
-- Üç silüetin kulak/anten/gövde/prop bölgeleri, saydam köşeleri ve sıfır boyutlu hit maskesi test edilir. Önceki kutlama, mute/snooze ve restore testleri geçer. Üç karakterin sekiz pozunda, salt okunur macOS Reduce Motion girdisi çiziciye kontrollü verilerek iki farklı örnek zamanın piksel çıktısı karşılaştırılır: 24 karşılaştırmada hareket yoktur. Sistem ayarı değiştirilmez.
-- **Gerçek NSHostingView ve NSPanel:** 10 oturumun görünmeyen gövdesi hâlâ bağlıyken 330×36 pt kompakt pencere, layout ve run-loop sonrasında 36 pt kalır. Host sizingOptions boş; pencerenin örtük minimum yüksekliği 0’dır. İçerik host ölçümü ayrıca 36/38 pt başlıklarda denenir.
-- Gerçek SwiftUI içerik ölçümü: 0 oturum 142 pt; 1 oturum 145 pt; 3 oturum 255 pt; 10 oturum 640 pt doğal gövde yüksekliği. 10 oturumda 520 pt viewport sınırı uygulanır. Bunlar İngilizce/460 pt test düzeninin ölçüleridir; diğer diller/ekranlarda yeniden ölçülür. Maskot paneli de kendi içeriğinden ölçülür.
-- Uzun proje adı, etiket değişimi, aynı hedef, kesilmiş geçişte tersine dönme, geçersiz hover zamanlayıcıları ve 1 pt ölçüm yuvarlamasında yeniden animasyon başlatmama test edilir.
-- ThemeCoordinator gerçek NSWindow ve bağlı NSPanel üzerinde koyu → açık → sistem → koyu geçirir. İki pencerede görünüm birlikte değişir; sistemde override kaldırılır. Native labelColor koyuda açık, açıkta koyu çözümlenir.
+## Bekleyen fiziksel kabul
 
-## Paket ve yerel veri
+Paketli uygulama `open -n` ile denenirken LaunchServices -10827 (kLSNoExecutableErr) verdi. Paket içindeki executable mevcut, çalıştırılabilir ve arm64 Mach-O olarak doğrulandı; Paketin storage CLI modu çalıştı. Paketin render CLI modu exit 134 ile durdu; aynı kaynakların SwiftPM release executable dosyası bütün önizlemeleri başarıyla üretti. Paket içinden çizim yapılmış kabul edilmez. CUA envanterinde çalışan Dev Island bulunmadı. NSScreen fiziksel ekran sağlamadığı için ilgili test açıkça skip eder.
 
-- arm64 release uygulama ve nested köprü derlenir; minimum macOS 14. Yeni 1024 px di ikonu ve küçük ICNS boyutları ortak vektörden üretilir.
-- Yerel ad-hoc imza codesign deep/strict kontrolünden geçer. Bu Developer ID/notarization değildir.
-- Gerçek paket köprüsüyle 10 eşzamanlı süreç, Unix socket, uygulama kapalıyken disk kuyruğu, metadata gizliliği, 0600 izinler, bozuk/büyük girdi ve sessiz exit 0 kontrolü geçer.
-- Son köprü smoke kaydı: offline 175,46 ms; canlı süreç başına ortalama 30,70 ms; eşzamanlı grubun aktarımı 48,16 ms. Bunlar görünür adaya kadar uçtan uca ölçüm değildir. Ham kayıt bridge-smoke.json içindedir.
-- SwiftData ikinci repository ile round-trip geçer: soru beklemesi ve korelasyon korunur, soru önizlemesi diske yazılmaz. Sandbox’ta CoreData store-change notification kayıt uyarısı görülebilir; veri testi başarılıdır.
+Bu nedenle çentiğin fiziksel hizası, başka uygulama/masaüstü odaktayken gerçek hover/tıklama, sürükleme, Spaces/tam ekran, çoklu ekran ve Instruments CPU/FPS kabulü kullanıcı Mac’inde yapılmalıdır. Developer ID/notarization ve ikinci Mac kurulumu tamamlanmış sayılmaz.
 
-## Görsel çıktılar
+İlk bridge denemesi sandbox yerel socket kısıtına takıldı; erişim sonrası gerçek socket testi geçti. Paket render denemesi erişim sonrası da exit 134 verdi. SwiftPM release executable ile bütün renderlar başarılıdır; paketli canlı kabul bekler. Hook kurulumu, kullanıcı Claude ayarları ve üretim veri dizini değiştirilmedi.
 
-- Altı ayar sayfasının açık/koyu önizlemeleri **NSHostingView.cacheDisplay** ile gerçek native sidebar, GroupBox, picker, toggle ve metin alanlarından üretilir. Etkin olmayan, ekran dışında bir pencere çizimidir; tam uygulamanın canlı kullanımı değildir.
-- Ada ve maskot paneli: açık/koyu × Liquid Glass/buzlu/opak için 12 ImageRenderer çıktısı. Kompakt ada ayrıca 180×36 pt olarak çizilir; PNG’ler 2× ölçektedir.
-- Kedi ve Robot için özel renkli ayar/ada örnekleri; üç karakterin sekiz pozu ve beş gövde rengi örneği.
-- Üç karakter × sekiz durum için 24 GIF. Tanıtım GIF’leri döngülüdür; uygulamadaki tamamlanma kutlaması bir kez oynar. Reduce Motion uygulamada pozları sabitler.
-- ImageRenderer panel örneklerinde ScrollView/menu snapshot karşılığı ve camın statik temsili bulunur. Gerçek desktop arka planı veya pencere geçişi FPS’i bu resimlerden doğrulanmaz.
-
-## Paketlenmiş uygulamanın canlı kabulü
-
-Bu turda .app açılışı LaunchServices **kLSNoExecutableErr (-10827)** döndürdü. Executable dosyası mevcut; arm64 derleme ve imza doğrulanır. AppKit host/pencere ve native çizim kontrolleri geçse de LaunchServices üzerinden tam uygulama çalıştırma kabulü bu ortamda engelli kalır.
-
-Dolayısıyla şu maddeler **bekliyor**:
-
-- Paketlenmiş uygulamada gerçek hover/aç-kapa akıcılığı, çentik hizası, klavye odağı ve maskot sürükleme/tıklama geçişi.
-- Gerçek OS tema değişikliği, menüler/sheet’ler ve Liquid Glass’ın canlı masaüstü arka planı; macOS 14/15 fallback runtime kontrolü.
-- Ekran çıkarma, çoklu ekran, tam ekran/Spaces, uyku/uyanma ve fiziksel VoiceOver kullanımı.
-- Instruments ile kare süreleri, boşta CPU/enerji ve %1 CPU hedefi.
-- Dört terminalde gerçek Claude uçtan uca senaryoları, izin reddi akışları ve temiz ikinci Mac.
-- Developer ID, notarization, Gatekeeper ve imzalı DMG kabulü. Teslim ZIP’i yerel ad-hoc pakettir.
-
-Normal macOS oturumunda uygulamayı açıp Görünüm’den tema, karakter ve renkleri değiştir; kompakt adanın altında yüzey kalmadığını, hover sırasında bildirim süresinin durduğunu ve sürükleme/tıklama geçişini doğrula. Mevcut Claude ayarlarına bu geliştirme turunda otomatik hook kurulumu yapılmadı.
+Detay: V034_SESSION_MASCOTS.md. Eski üst giriş düzeltmesi: V033_FIX.md. Ham test ve derleme çıktıları teslim klasöründedir.
