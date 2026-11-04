@@ -29,6 +29,7 @@ import CDevIsland
     @Published var configPath: String {
         didSet { defaults.set(configPath, forKey: "claudeConfigPath"); refreshIntegration() }
     }
+    lazy var updates = UpdateController(defaults: defaults)
     let paths: AppPaths
     let defaults: UserDefaults
     var repository: SessionRepository?
@@ -113,6 +114,10 @@ import CDevIsland
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(sleeping), name: NSWorkspace.willSleepNotification, object: nil)
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(sleeping), name: NSWorkspace.sessionDidResignActiveNotification, object: nil)
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(woke), name: NSWorkspace.sessionDidBecomeActiveNotification, object: nil)
+        if Bundle.main.infoDictionary?["DevIslandOfficialRelease"] as? Bool == true {
+            do { try installer.refreshInstalledHelper(from: Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/dev-island-bridge")) }
+            catch { status = t("Köprü yenilenemedi: ", "Could not refresh bridge: ") + error.localizedDescription }
+        }
         refreshIntegration(); refreshNotificationPermission(); detectClaudeVersion()
         if CommandLine.arguments.contains("--demo") { seedDemo() }
     }
@@ -157,6 +162,11 @@ import CDevIsland
             updated.sessions[id]?.sessionName = name; changed = true
         }
         if changed { ledger = updated; try? repository?.save(ledger) }
+    }
+    func showDesktopMascot(resetPosition: Bool = false) {
+        var updated = preferences
+        updated.showDesktopMascot(resetPosition: resetPosition)
+        preferences = updated
     }
     func sessionPresentation(for session: AgentSession) -> SessionPresentation {
         SessionPresentation(session: session, hideProjects: preferences.hideProjects,

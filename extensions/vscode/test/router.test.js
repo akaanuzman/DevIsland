@@ -6,6 +6,7 @@ const net = require('node:net');
 const path = require('node:path');
 const { createRouter } = require('../router');
 const { createFake } = require('./fake-vscode');
+const crypto = require('node:crypto');
 function root(t) { const root = fs.mkdtempSync('/tmp/di-vsc-test-'); t.after(() => fs.rmSync(root, { recursive: true, force: true })); return root; }
 function record(router) { return JSON.parse(fs.readFileSync(router.registryPath)); }
 function request(record, terminal = record.terminals[0], extra = {}) {
@@ -92,4 +93,20 @@ test('malformed and oversized input cannot cause an editor action', async t => {
   assert.equal(reply.ok,false);
   await new Promise(resolve=>{const socket=net.createConnection(r.socketPath);socket.on('connect',()=>socket.write('x'.repeat(5000)));socket.on('error',resolve);socket.on('close',resolve);});
   assert.equal(fake.commands.calls.length,0);
+});
+test('external Claude PTY routes to its exact live webview and unregisters cleanly', async t => {
+  const fake = createFake([101]);const router = await createRouter(fake, {root:root(t)});t.after(()=>router.dispose());
+  let focused=false,alive=true;
+  const id=crypto.randomUUID();const registration=router.registerExternalTerminal({id,processID:303,name:'Living Terminal',isAlive:()=>alive,focus:async()=>{focused=true;return true;}});
+  await router.refresh();const r=record(router),target=r.terminals.find(x=>x.id===id);
+  assert.equal(target.kind,'external');assert.equal((await send(r,request(r,target))).ok,true);assert.equal(focused,true);assert.equal(fake.window.activeTerminal,undefined);
+  focused=false;assert.equal((await send(r,request(r,target,{processID:304}))).ok,false);assert.equal(focused,false);
+  alive=false;assert.equal((await send(r,request(r,target))).ok,false);
+  registration.dispose();await router.refresh();assert.equal(record(router).terminals.some(x=>x.id===id),false);
+});
+test('external terminal must acknowledge focus and remain alive', async t => {
+  const fake=createFake([]),router=await createRouter(fake,{root:root(t)});t.after(()=>router.dispose());
+  const id=crypto.randomUUID();router.registerExternalTerminal({id,processID:303,name:'Living',isAlive:()=>true,focus:async()=>false});await router.refresh();const r=record(router);
+  assert.equal((await send(r,request(r))).ok,false);
+  assert.throws(()=>router.registerExternalTerminal({id,processID:404,isAlive:()=>true,focus:async()=>true}),/Invalid/);
 });

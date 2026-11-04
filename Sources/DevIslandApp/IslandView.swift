@@ -57,6 +57,11 @@ extension SessionState {
     var hover: ((Bool) -> Void)?
     var toggle: (() -> Void)?
     var collapse: (() -> Void)?
+    var bodyPressed: ((CGPoint) -> Void)?
+    var detachFromTop: (() -> Void)?
+    var headerPressed: ((CGPoint) -> Void)?
+    var headerReleased: (() -> Void)?
+    var cancelHeaderInput: (() -> Void)?
     var dragBegan: (() -> Void)?
     var dragChanged: ((CGPoint) -> Void)?
     var dragEnded: (() -> Void)?
@@ -101,6 +106,7 @@ struct IslandView: View {
             .frame(width: presentation.notchWidth > 0 ? max(0, (presentation.headerWidth - presentation.notchWidth) / 2 - 18) : nil, alignment: .leading)
             if presentation.notchWidth > 0 { Color.clear.frame(width: presentation.notchWidth) }
             Spacer(minLength: 8)
+            Color.clear.frame(width: 30, height: 24)
             HStack(spacing: 5) {
                 Text("\(model.waitingCount > 0 ? model.waitingCount : model.runningCount)")
                     .font(.system(size: 12, weight: .medium)).monospacedDigit()
@@ -109,8 +115,12 @@ struct IslandView: View {
         }
         .padding(.trailing, presentation.attachedToTop ? 0 : 28)
         .padding(.horizontal, 18).frame(width: presentation.headerWidth, height: presentation.safeTop)
-        .overlay { if !snapshot { IslandHeaderInput(presentation: presentation, resetTitle: model.t("Üst ortaya sıfırla", "Reset to top center"), sessionHelp: name + " · " + (session.map { model.title($0.state) } ?? "")) } }
+        .overlay { if !snapshot { IslandHeaderInput(presentation: presentation, resetTitle: model.t("Üst ortaya sıfırla", "Reset to top center"), dragTitle: presentation.attachedToTop ? model.t("Paneldeki Taşı alanını sürükleyerek üstten ayır.", "Drag the Move handle in the panel to detach from the top.") : model.t("Taşımak için başlığı sürükle", "Drag the header to move"), sessionHelp: name + " · " + (session.map { model.title($0.state) } ?? "")) } }
         .overlay(alignment: .trailing) {
+            if snapshot {
+                Image(nsImage: IslandGrip.image).renderingMode(.template).foregroundStyle(Color(colors.secondary))
+                    .frame(width: 24, height: 24).padding(.trailing, presentation.attachedToTop ? 66 : 94)
+            }
             if snapshot && !presentation.attachedToTop {
                 Image(systemName: "pin.fill").font(.system(size: 12)).foregroundStyle(Color(colors.secondary)).frame(width: 24, height: 24).padding(.trailing, 16)
             }
@@ -126,8 +136,8 @@ struct IslandView: View {
         Group {
             switch presentation.bodyMode {
             case .compact: EmptyView()
-            case .alert: IslandAlertBody(model: model, sessionID: presentation.sessionID, active: presentation.visible && presentation.mode == .alert, close: { presentation.collapse?() }, showAll: { presentation.toggle?() })
-            case .expanded: SessionTrayView(model: model, active: presentation.visible && presentation.mode == .expanded, close: { presentation.collapse?() })
+            case .alert: IslandAlertBody(model: model, sessionID: presentation.sessionID, island: presentation, active: presentation.visible && presentation.mode == .alert, close: { presentation.collapse?() }, showAll: { presentation.toggle?() })
+            case .expanded: SessionTrayView(model: model, island: presentation, active: presentation.visible && presentation.mode == .expanded, close: { presentation.collapse?() })
             }
         }
         .frame(width: presentation.geometry.width, height: max(0, presentation.geometry.height - presentation.safeTop), alignment: presentation.expandsUpward ? .bottom : .top)
@@ -141,6 +151,7 @@ struct IslandAlertBody: View {
     @Environment(\.themeColors) private var colors
     @ObservedObject var model: AppModel
     var sessionID: String?
+    var island: IslandPresentation? = nil
     var active = false
     var close: () -> Void
     var showAll: () -> Void
@@ -154,8 +165,8 @@ struct IslandAlertBody: View {
                         Text(model.sessionPresentation(for: session).name).help(model.sessionPresentation(for: session).name).font(.system(size: 12)).foregroundStyle(Color(colors.secondary)).lineLimit(1)
                     }
                     Spacer()
-                    Button(action: close) { Image(systemName: "xmark").font(.system(size: 10, weight: .bold)) }
-                        .buttonStyle(.plain).accessibilityLabel(model.t("Bildirimi kapat", "Dismiss notification"))
+                    if let island { IslandMoveHandle(model: model, presentation: island) }
+                    IslandCloseButton(label: model.t("Bildirimi kapat", "Dismiss notification"), action: close)
                 }
                 HStack {
                     Button(model.t("Uygulamaya dön", "Return to app")) { model.routeSession?(session) }.buttonStyle(.bordered)
@@ -166,9 +177,39 @@ struct IslandAlertBody: View {
         }.padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 12)
     }
 }
+struct IslandMoveHandle: View {
+    @ObservedObject var model: AppModel
+    @ObservedObject var presentation: IslandPresentation
+    @Environment(\.snapshotPreview) private var snapshot
+    private var label: some View {
+        HStack(spacing: 6) {
+            Image(nsImage: IslandGrip.image).renderingMode(.template)
+            Text(model.t("Taşı", "Move")).font(.system(size: 11, weight: .medium))
+        }.foregroundStyle(.secondary).frame(width: 64, height: 32).contentShape(Rectangle())
+    }
+    var body: some View {
+        Group {
+            // ImageRenderer cannot draw a native borderless button. Preserve its exact label in artifacts.
+            if snapshot { label }
+            else {
+                Button { presentation.detachFromTop?() } label: { label }
+                    .buttonStyle(.borderless)
+                    .overlay {
+                        IslandHeaderInput(presentation: presentation,
+                                          resetTitle: model.t("Üst ortaya sıfırla", "Reset to top center"),
+                                          dragTitle: model.t("Sürükleyerek taşı. Tıklayarak üstten ayır.", "Drag to move. Click to detach from the top."), bodyDrag: true)
+                    }
+            }
+        }
+        .help(model.t("Sürükleyerek taşı. Tıklayarak üstten ayır.", "Drag to move. Click to detach from the top."))
+        .accessibilityLabel(model.t("Adayı taşı; tıklayarak üstten ayır", "Move island; click to detach from top"))
+    }
+}
+
 struct SessionTrayView: View {
     @Environment(\.themeColors) private var colors
     @ObservedObject var model: AppModel
+    var island: IslandPresentation? = nil
     var active = false
     var close: () -> Void
     var body: some View {
@@ -177,8 +218,8 @@ struct SessionTrayView: View {
                 Text(model.t("Oturumlar", "Sessions")).font(.system(size: 12, weight: .semibold))
                 Text("\(model.sessions.count)").font(.system(size: 11)).foregroundStyle(Color(colors.secondary))
                 Spacer()
-                Button(action: close) { Image(systemName: "xmark").font(.system(size: 10, weight: .semibold)) }
-                    .buttonStyle(.plain).foregroundStyle(Color(colors.secondary)).accessibilityLabel(model.t("Daralt", "Collapse"))
+                if let island { IslandMoveHandle(model: model, presentation: island) }
+                IslandCloseButton(label: model.t("Daralt", "Collapse"), action: close)
             }.fixedSize(horizontal: false, vertical: true)
             ViewThatFits(in: .vertical) {
                 rows.fixedSize(horizontal: false, vertical: true)

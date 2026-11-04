@@ -128,22 +128,34 @@ public struct IslandInteraction {
     public private(set) var generation: UInt64 = 0
     public private(set) var pinned = false
     public private(set) var hovered = false
+    public private(set) var pressed = false
     public private(set) var dragging = false
+    public var interacting: Bool { pressed || dragging }
     public private(set) var hoverSuppressed = false
     public init() {}
     public mutating func enter() -> UInt64 { hovered = true; generation &+= 1; return generation }
     public mutating func leave() -> UInt64 { hovered = false; hoverSuppressed = false; generation &+= 1; return generation }
     public mutating func pin() { pinned = true; generation &+= 1 }
     public mutating func collapse() { pinned = false; generation &+= 1 }
-    public mutating func beginDrag() { dragging = true; generation &+= 1 }
+    public mutating func dismiss() {
+        pinned = false; hovered = false; hoverSuppressed = true; generation &+= 1
+    }
+    public mutating func finishDismissal(hovered: Bool) {
+        self.hovered = hovered; hoverSuppressed = hovered; generation &+= 1
+    }
+    public mutating func resumeHover() {
+        if hoverSuppressed { hoverSuppressed = false; generation &+= 1 }
+    }
+    public mutating func press() { pressed = true; generation &+= 1 }
+    public mutating func beginDrag() { pressed = true; dragging = true; generation &+= 1 }
     public mutating func endDrag(hovered: Bool) {
-        dragging = false; self.hovered = hovered; hoverSuppressed = hovered; generation &+= 1
+        pressed = false; dragging = false; self.hovered = hovered; hoverSuppressed = hovered; generation &+= 1
     }
     public mutating func resetForDock() {
-        pinned = false; hovered = false; dragging = false; hoverSuppressed = false; generation &+= 1
+        pinned = false; hovered = false; pressed = false; dragging = false; hoverSuppressed = false; generation &+= 1
     }
     public func permits(_ ticket: UInt64, opening: Bool) -> Bool {
-        ticket == generation && !pinned && !dragging && !hoverSuppressed && (opening ? hovered : !hovered)
+        ticket == generation && !pinned && !interacting && !hoverSuppressed && (opening ? hovered : !hovered)
     }
 }
 

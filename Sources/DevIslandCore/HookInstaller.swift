@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 public enum HookInstallerError: LocalizedError {
     case invalidSettings, policyBlocked, unsafePath, missingHelper, settingsChanged
@@ -65,6 +66,22 @@ public struct HookInstaller {
         }
         object["hooks"] = hooks
         try write(object, baseline: baseline)
+    }
+    /// Refresh the owned executable after an app update, without rewriting Claude settings.
+    @discardableResult public func refreshInstalledHelper(from source: URL) throws -> Bool {
+        let state = try inspect()
+        guard state.installed, !state.blocked else { return false }
+        guard FileManager.default.isExecutableFile(atPath: source.path) else { throw HookInstallerError.missingHelper }
+        try paths.prepare()
+        if (try? paths.helper.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink) == true { throw HookInstallerError.unsafePath }
+        let bytes = try Data(contentsOf: source)
+        if (try? Data(contentsOf: paths.helper)) == bytes { return false }
+        let staging = paths.helper.deletingLastPathComponent().appendingPathComponent(".bridge-" + UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: staging) }
+        try bytes.write(to: staging, options: .withoutOverwriting)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: staging.path)
+        guard rename(staging.path, paths.helper.path) == 0 else { throw CocoaError(.fileWriteUnknown) }
+        return true
     }
     public func uninstall() throws {
         let baseline = try currentData()

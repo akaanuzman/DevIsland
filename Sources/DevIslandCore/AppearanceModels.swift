@@ -99,3 +99,12 @@ public enum MascotSilhouette {
         return offsets.contains { dy in regions.contains { $0.contains(CGPoint(x: p.x, y: p.y + dy)) } }
     }
 }
+
+extension Preferences {
+    /// Explicit user recovery, never a migration that overrides an intentional hidden preference.
+    public mutating func showDesktopMascot(resetPosition: Bool = false) {
+        mascotHidden = false
+        if companionVisibility == .island { companionVisibility = .both }
+        if resetPosition { mascotPlacement = .init() }
+    }
+}

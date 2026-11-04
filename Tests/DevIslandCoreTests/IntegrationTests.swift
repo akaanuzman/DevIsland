@@ -66,6 +66,27 @@ final class IntegrationTests: XCTestCase {
         XCTAssertFalse(try installer.inspect().installed)
         XCTAssertTrue(try FileManager.default.contentsOfDirectory(atPath: config.path).contains { $0.hasPrefix("settings.dev-island-backup-") })
     }
+    func testUpdatedHelperIsAtomicAndDoesNotRewriteClaudeSettings() throws {
+        let paths = AppPaths(root: temporary.appendingPathComponent("refresh-app"))
+        let config = temporary.appendingPathComponent("refresh-claude")
+        let installer = HookInstaller(configDirectory: config, paths: paths)
+        let source = temporary.appendingPathComponent("bundled-helper")
+        try Data("#!/bin/sh\nexit 0\n".utf8).write(to: source)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: source.path)
+        XCTAssertFalse(try installer.refreshInstalledHelper(from: source))
+        try installer.install(helper: source)
+        let settings = try Data(contentsOf: installer.settingsURL)
+        let backupCount = try FileManager.default.contentsOfDirectory(atPath: config.path).count
+        try Data("#!/bin/sh\n# new build\nexit 0\n".utf8).write(to: source)
+        XCTAssertTrue(try installer.refreshInstalledHelper(from: source))
+        XCTAssertFalse(try installer.refreshInstalledHelper(from: source))
+        XCTAssertEqual(try Data(contentsOf: paths.helper), try Data(contentsOf: source))
+        XCTAssertTrue(FileManager.default.isExecutableFile(atPath: paths.helper.path))
+        XCTAssertEqual(try Data(contentsOf: installer.settingsURL), settings)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: config.path).count, backupCount)
+        try installer.uninstall()
+        XCTAssertFalse(try installer.refreshInstalledHelper(from: source))
+    }
     func testInvalidSettingsAreNotOverwritten() throws {
         let config = temporary.appendingPathComponent("claude")
         try FileManager.default.createDirectory(at: config, withIntermediateDirectories: true)

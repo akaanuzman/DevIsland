@@ -1,12 +1,13 @@
-# Dev Island v0.3.6 — doğrulama
+# Dev Island 0.4.1 — doğrulama
 
-- 104 XCTest: 103 başarılı, fiziksel NSScreen isteyen 1 test skip, 0 hata. Eski 99 test ve yeni 5 native routing testi.
-- 9 Node eklenti testi: hepsi başarılı. Gerçek yerel socket'ler ve sahte VS Code nesneleriyle iki pencere/aynı isim, yanlış token/PID/UUID, kapanma/eksik PID, focus hatası, özel izinler ve bozuk/büyük girdi doğrulandı.
-- Gerçek kullanıcı VS Code host'larıyla 3 pencere / 5 Claude terminali: hepsi başarılı. Native production EditorRouteClient PID/doğum zamanı ve üst süreçleri doğruladı; pencere/terminal UUID yanıtı, gerçek aktif terminal ve window.state.focused doğrulandı. Aynı pencerede 3 ayrı Claude terminali seçildi. Terminal komutu veya prompt gönderilmedi. Paketli .app executable içinden bir gerçek terminal dönüşü de geçti (PACKAGED-ROUTING.json). LIVE-ROUTING.json kanıttır; UI mock değildir.
-- VSIX izole kurulum kontrolü ve gerçek kullanıcı CLI kurulumu başarılı. Mevcut üç VS Code penceresi eklentiyi yükledi; otomatik reload yapılmadı. Yeni native app kopyası kullanılmalıdır.
-- Gerçek paket köprüsü, 10 oturum Unix socket/sessiz fail-open/isim aktarımı, isim fallback/rename ve SwiftData isim+bekleme saklama kontrolleri geçti. App/VSIX/ZIP bütünlüğü ve ad-hoc imza doğrulandı.
-- Üretim SwiftUI görünümlerinden güncel ayarlar/ada/maskot önizlemeleri üretildi. Bunlar canlı cihaz animasyonu/FPS kanıtı değildir.
+- Swift XCTest: **132 toplam; 131 başarılı, 1 fiziksel ekran testi atlandı, 0 hata**.
+- Altı yeni pinli Taşı testi native host üzerinde başarılı; tam paket sonrasında tekrar çalıştırıldı.
+- VS Code connector: **11 başarılı test**; önceki kullanıcı değişiklikleri korundu.
+- Yayın/gerçek Sparkle EdDSA testleri: **5 başarılı test**.
+- Release arm64, paketli bridge/naming (10 eşzamanlı oturum), SwiftData round-trip, oturum adı ve bekleme durumunun korunması, özel önizleme metninin diske yazılmaması başarılı.
+- codesign --verify --deep --strict ve ZIP bütünlüğü başarılı; imza ad-hoc, Developer ID/notarization yok.
+- Pinli ada açık/koyu PNG’lerinde yeni Taşı alanı görsel olarak kontrol edildi. Kompakt yüksekliğe ek boşluk eklenmedi. Native düğme snapshot’ta aynı boyutlu etiketle temsil edilir.
+- Canlı CUA uygulama açılışı -10005 timeoutReached nedeniyle doğrulanamadı. WindowServer fiziksel NSScreen sunmadığından ilgili XCTest atlandı. Gerçek mouse/trackpad, menü çubuğu, Spaces, fiziksel ekranlar ve odak davranışı canlı kabul bekliyor. Önceki LaunchServices -10827 kontrolü bu tur yeniden çalıştırılmadı.
+- Uzaktan güncelleme yerel pakette kapalı; Developer ID Application, GitHub Secrets/Pages ve iki imzalı beta arasındaki gerçek güncelleme kabulü bekliyor.
 
-Native UI aracı zaman aşımına uğradı; izole Code GUI test host'u sonuç üretmedi. Buna karşın mevcut kullanıcı VS Code host'larında gerçek API üzerinden hedef seçimi doğrulandı. Adadaki düğmeye fiziksel fareyle basma, çentik/Spaces/tam ekran, Instruments CPU/FPS, ikinci Mac ve Developer ID/notarization kabulü ayrıca bekler. Kaynak/tercihler/Claude hook kuralları korunur. Kullanıcının VS Code eklenti ve kurulum kayıtları yalnızca onaylanan yerel VSIX kurulumuyla güncellendi; projelere veya terminallere metin yazılmadı.
-
-Detay: V036_VSCODE_ROUTING.md. Ham sonuçlar: TESTS.txt, NODE-TESTS.txt, LIVE-ROUTING.json, VSIX-INSTALL.txt, BRIDGE.json, NAME-BRIDGE.json, STORAGE.txt.
+[Kullanım ve değişiklikler](V041_PINNED_DRAG.md) · [Yayın kurulumu](UPDATES.md)

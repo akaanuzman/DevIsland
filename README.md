@@ -2,7 +2,15 @@
 
 Claude Code oturumlarını izleyen, yerel çalışan macOS menü çubuğu uygulaması. Soru, plan ve izin bekleme durumlarını çentiğin yanında açılan bir ada, sistem bildirimi ve isteğe bağlı seslerle gösterir.
 
-**Durum:** v0.3.6 yerel alfa. Dağıtılabilir beta kabulü için Developer ID/notarization, ikinci Mac ve gerçek terminal senaryolarının tamamlanması gerekir. Clawd, Kedi ve Robot maskotları bu sürüme dahildir; mobil push sonraki fazdadır.
+**Durum:** v0.4.1 yerel alfa. Dağıtılabilir beta kabulü için Developer ID/notarization, ikinci Mac ve gerçek terminal senaryolarının tamamlanması gerekir. Clawd, Kedi ve Robot maskotları bu sürüme dahildir; mobil push sonraki fazdadır.
+
+## v0.3.7: maskotu geri getirme ve kolay kapatma
+
+Görünüm → **Maskotu göster ve konumunu sıfırla**, gizli veya yalnızca ada modundaki masaüstü karakterini geri getirir. Boyut, vurgu/karakter renkleri ve diğer ayarlar korunur. Menü çubuğundaki **Maskotu göster** kayıtlı konumu koruyarak açar.
+
+Ada ve maskot panelindeki **X**, 32×32 pt native tıklama alanına sahiptir. Başka bir uygulama odaktayken ilk tıklamada çalışır; Escape ile de kapanır. Kapanırken gelen hover olayları adayı hemen geri açmaz. Pointer kompakt adada kaldıysa yeniden hover açılışı için önce dışına çıkıp tekrar gelmek gerekir. Yeni bildirim veya açıkça yeniden açma normal çalışır.
+
+[Detay ve kabul notları](docs/V037_MASCOT_AND_CLOSE.md).
 
 ## v0.3.6: doğru VS Code penceresi ve terminali
 
@@ -42,7 +50,7 @@ Görünüm’de vurgu ve karakter rengi için ayrı Varsayılana sıfırla düğ
 
 ## v0.3: kompakt ada, yerel tasarım ve üç maskot
 
-Ana kaynak proje /Users/kaanuzman/Desktop/dev/DevIsland içindedir. Sohbetin outputs/DevIsland-v0.3.6 klasörü yalnızca yayın paketleri, önizlemeler ve doküman teslimidir.
+Ana kaynak proje /Users/kaanuzman/Desktop/dev/DevIsland içindedir. Sohbetin outputs/DevIsland-v0.3.7 klasörü yalnızca yayın paketleri, önizlemeler ve doküman teslimidir.
 
 **Görünüm** bölümünde Sistem/Açık/Koyu tema ve Liquid Glass/Buzlu cam/Opak yüzey ayrı seçilir. macOS 26 gerçek Liquid Glass kullanır; macOS 14/15 buzlu cam karşılığını gösterir. Cam stili, zemin yoğunluğu ve vurgu rengi ayarlanabilir. Reduce Transparency opak yüzeye, Reduce Motion hareketsiz maskot pozlarına ve kısa geçişlere dönüşür.
 
@@ -56,14 +64,14 @@ Ada açılışı 320 ms, kapanışı 240 ms; hover beklemesi 120/400 ms’dir. A
 
 ## Çalıştırma
 
-Apple Silicon Mac, macOS 14+ ve Xcode/Swift 6 araçları gerekir. Haricî paket veya hesap gerekmez.
+Apple Silicon Mac, macOS 14+ ve Xcode/Swift 6 araçları gerekir. Derlemede Sparkle 2.9.6 SwiftPM üzerinden indirilir. Oturum takibi için hesap veya sunucu gerekmez.
 
 ```bash
 bash scripts/build-app.sh
 open "dist/Dev Island.app"
 ```
 
-Paketlenmiş uygulama `dist/Dev Island.app`, arşiv `dist/Dev-Island-0.3.6-arm64.zip` altında oluşur. Yerel derleme ad-hoc imzalıdır; başka Mac’lere dağıtım için `scripts/notarize.sh` kullanılır. Finder’da Applications’a taşındıktan sonra hook kurulumu yapılması önerilir. Köprü sabit bir kullanıcı veri dizinine kopyalandığı için uygulama güncellemesi hook komutunu değiştirmez.
+Paketlenmiş uygulama `dist/Dev Island.app`, arşiv `dist/Dev-Island-0.4.1-arm64.zip` altında oluşur. Yerel derleme ad-hoc imzalıdır; başka Mac’lere dağıtım için `scripts/notarize.sh` kullanılır. Finder’da Applications’a taşındıktan sonra hook kurulumu yapılması önerilir. Köprü sabit bir kullanıcı veri dizinine kopyalandığı için uygulama güncellemesi hook komutunu değiştirmez.
 
 İlk açılışta **Hook’ları incele ve bağlan** ile eklenecek kayıtları gör. Kurulum mevcut Claude ayarlarını yedekleyerek korur. Mevcut Claude oturumlarını yeniden başlat, bir prompt gönder ve oturumun listede göründüğünü doğrula. Bildirim izni **Bildirimler ve ses** bölümünden verilir. Girişte başlatma varsayılan kapalıdır.
 
@@ -84,7 +92,7 @@ Dengeli profil soru, plan, izin ve hatada sesli; yanıt tamamlanmasında sessizd
 
 ## Gizlilik ve dosyalar
 
-Uygulama ağ bağlantısı veya telemetri kullanmaz. Raw hook JSON, prompt, komut, plan ve transcript saklanmaz. Aktarım kuyruğu ve SwiftData snapshot yalnızca izin verilen metaveriyi tutar. Soru metni yalnızca canlı yerel socket üzerinden belleğe gelir; diske yazılmaz. Sistem bildirimleri proje/soru içermeyen genel durum metnidir.
+Oturum takibi tamamen yereldir; telemetri yoktur. Resmî imzalı sürüm, güncelleme kontrolü ve paket indirmek için GitHub Pages/Releases’a HTTPS bağlantısı kurar. Oturum veya konuşma içeriği bu servislere gönderilmez. Yerel geliştirme paketinde güncelleyici kapalıdır. Raw hook JSON, prompt, komut, plan ve transcript saklanmaz. Aktarım kuyruğu ve SwiftData snapshot yalnızca izin verilen metaveriyi tutar. Soru metni yalnızca canlı yerel socket üzerinden belleğe gelir; diske yazılmaz. Sistem bildirimleri proje/soru içermeyen genel durum metnidir.
 
 Yerel veri: `~/Library/Application Support/DevIsland/`; izinler dizinde `0700`, kuyruk dosyalarında `0600`. Varsayılan geçmiş süresi 7 gündür. Aktif ve çözülmemiş oturumlar geçmiş temizlenince korunur. Tercihler UserDefaults’tadır. `CLAUDE_CONFIG_DIR` veya ayarlardaki dizin alanı özel Claude yapılandırmalarını destekler.
 
@@ -129,3 +137,11 @@ bash scripts/notarize.sh
 Sertifika ve notarytool profili bu repoya eklenmez. Yayın script’i nested köprüyü ve uygulamayı hardened runtime ile imzalar, Apple’a gönderir, bileti staple eder, DMG oluşturur ve DMG’yi doğrular.
 
 v0.3.4 sunumu: [V034](docs/V034_SESSION_MASCOTS.md). v0.3.3 düzeltmesi: [V033_FIX](docs/V033_FIX.md). Önceki kapsam: [V032_PLAN](docs/V032_PLAN.md). Önceki sürüm: [V031_PLAN](docs/V031_PLAN.md). Önceki v0.3 kapsamı: [V03_PLAN](docs/V03_PLAN.md). Önceki v0.2 tema/animasyon/maskot kararları: [V02_PLAN](docs/V02_PLAN.md). Ürün/mimari kararları: [PLAN](docs/PLAN.md). Gelecek fazlar: [ROADMAP](docs/ROADMAP.md). Doğrulama ve kalan kabul işleri: [VALIDATION](docs/VALIDATION.md).
+
+## v0.4 — taşıma ve uygulama içinden güncelleme
+
+Başlıktaki noktalı tutamaktan veya başlığın diğer boş alanlarından taşı. Basılı tutarken hover ve bildirim kapanışı durur; 4 pt hareket taşıma sayılır. Escape eski konuma döner; üste sabitleme ve kayıtlı ekran konumları korunur.
+
+Ayarlar → Güncellemeler, resmî sürümlerde saatlik kontrol, isteğe bağlı beta ve manuel güncelleme sunar. İlk 0.4 kurulumu elle yapılır; sonraki sürümler Sparkle üzerinden gelir. Bu klasördeki ad-hoc paket resmî uzaktan yayın değildir. Tek kaynak sürüm dosyası `Resources/version.json`; imza/Secrets/Pages kurulumu ve etiketleme için [UPDATES.md](docs/UPDATES.md).
+
+Üste sabitlenmiş adayı kolay taşımak için üzerine gelerek paneli aç, **Taşı** alanını sürükle. Bu alan menü çubuğunun altında 64×32 pt gerçek bir hedef sunar. Taşı’ya tek tıklamak adayı üstten ayırır; ardından normal başlığından da taşınır. Kompakt yükseklik ve üste sabitleme korunur.

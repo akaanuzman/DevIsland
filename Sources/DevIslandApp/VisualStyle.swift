@@ -73,9 +73,9 @@ struct IslandSurface: ViewModifier {
     @Environment(\.snapshotPreview) private var snapshot
     private var fill: Color { scheme == .dark ? Color(hex: "202020") : Color(hex: "F5F5F5") }
     func body(content: Content) -> some View {
-        content.background { surface }
+        content.background { surface.allowsHitTesting(false) }
             .clipShape(shape)
-            .overlay(shape.strokeBorder(.primary.opacity(scheme == .dark ? 0.12 : 0.07), lineWidth: 0.5))
+            .overlay(shape.strokeBorder(.primary.opacity(scheme == .dark ? 0.12 : 0.07), lineWidth: 0.5).allowsHitTesting(false))
     }
     @ViewBuilder private var surface: some View {
         if reduceTransparency || preferences.surface == .opaque {

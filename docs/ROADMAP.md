@@ -62,7 +62,7 @@ Kaynaklar: [Pushover API](https://pushover.net/api), [Pushover fiyatlandırma](h
 - Intel/macOS sürüm matrisi ve universal binary.
 - SSH, tmux, uzak Claude oturumları; oturum sahibine dönüş protokolü.
 - Diğer ajanlar için sağlayıcı adaptörleri; izin ve tamamlanma sözleşmelerini ayrı doğrula.
-- İmzalı otomatik güncelleme kanalı ve geri alma.
+- v0.4 güncelleme altyapısının gerçek Developer ID/Pages kurulumu ve iki imzalı beta arasında uçtan uca kabulü; otomatik geri alma ileride ayrı değerlendirilecek.
 
 ## v0.3.1 — eklenen yerel etkileşimler
 
@@ -76,3 +76,12 @@ Hook session_title ve yerel kayıtların oturum kimliğiyle eşlenmesi eklendi. 
 
 ### v0.3.6 — VS Code tam pencere/terminal dönüşü
 VS Code local macOS için pencereye özel VSIX ve PID ancestry/instance eşlemesi tamamlandı; gerçek 3 pencere/5 terminalde doğrulandı. Cursor ve diğer IDE'lerde aynı düzey, remote/SSH/dev-container ve tmux paneli sonraki uyumluluk işleridir. Native ada düğmesinin fiziksel mouse kabulü, ikinci Mac ve imzalı dağıtım ayrıca takip edilir.
+
+### v0.3.7 — maskot ve kapatma
+Masaüstü maskotu için açık görünürlük/konum kurtarma eylemi, 32 pt native kapatma hedefi ve kapatma sonrası hover koruması eklendi. Mevcut renkler, VS Code yönlendirmesi ve hook takibi korunur. Fiziksel masaüstü/Spaces/FPS kabulü sürer.
+
+### v0.4 — güvenilir taşıma ve güncelleme altyapısı
+Basma anında duraklayan hover/alert zamanlayıcısı, noktalı başlık tutamağı, imlece bağlı taşıma ve bırakma sonrası hover doğrulaması eklendi. Sparkle 2.9.6, tek kaynak sürüm/build bilgisi, stable/beta seçenekleri, resmi yayın iş akışı ve ayarlara dokunmayan atomik köprü yenilemesi kaynakta hazır. Developer ID Application sertifikası, GitHub release ortamı/Secrets, açık dağıtım deposu, Pages ve iki imzalı beta arasındaki gerçek güncelleme kabulü dış kurulum bekler. Yerel paket bu işler bitene kadar güncelleme kontrolü başlatmaz.
+
+### v0.4.1 — pinli ada için erişilebilir taşıma
+Oturum ve bildirim panelinin menü altında kalan 64×32 pt Taşı alanı, tek tıkla ayırma, gerçek gövde tutma noktası ve aktif inputa ait Escape iptali eklendi. Kompakt boyut değişmedi. Altı native host testi geçti; fiziksel mouse/trackpad ve Spaces kabulü CUA erişim engeli nedeniyle bekliyor.

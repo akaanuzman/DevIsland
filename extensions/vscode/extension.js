@@ -12,7 +12,7 @@ async function activate(context) {
     context.subscriptions.push(vscode.commands.registerCommand('devIsland.connectionStatus', () => {
       vscode.window.showInformationMessage(`Dev Island: this window is connected (${vscode.window.terminals.length} terminals).`);
     }));
-    return { windowID: router.windowID, registryPath: router.registryPath, refresh: router.refresh };
+    return { windowID: router.windowID, registryPath: router.registryPath, refresh: router.refresh, registerExternalTerminal: router.registerExternalTerminal };
   } catch (error) { output.appendLine(`Local routing unavailable: ${error.message}`); }
 }
 function deactivate() { router?.dispose(); router = undefined; }

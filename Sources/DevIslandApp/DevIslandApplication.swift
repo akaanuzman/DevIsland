@@ -33,6 +33,11 @@ func launchTrace(_ stage: String) {
                         let height: CGFloat = page == .appearance ? 1020 : page == .notifications ? 900 : 700
                         try nativeSnapshot(SettingsView(model: model, initialPage: page).frame(width: 920, height: height).environment(\.colorScheme, scheme), dark: theme == .dark, to: destination.appendingPathComponent("settings-\(theme.rawValue)-\(page.rawValue).png"))
                     }
+                    let pinned = IslandPresentation(); pinned.mode = .expanded; pinned.bodyMode = .expanded
+                    pinned.safeTop = 44; pinned.notchWidth = 190; pinned.headerWidth = 542; pinned.attachedToTop = true
+                    let pinnedHeight = 44 + PanelSizing.height(of: SessionTrayView(model: model, island: pinned, close: {}).appTheme(model.preferences), width: 542, maximum: 520)
+                    pinned.geometry = .init(width: 542, height: pinnedHeight, radius: 26, contentOpacity: 1)
+                    try snapshot(IslandView(model: model, presentation: pinned).frame(width: 542, height: pinnedHeight), to: destination.appendingPathComponent("pinned-move-\(theme.rawValue).png"))
                     for surface in SurfaceMaterial.allCases {
                         model.preferences.surface = surface
                         let name = theme.rawValue + "-" + surface.rawValue
@@ -97,7 +102,8 @@ func launchTrace(_ stage: String) {
                 }
                 try snapshot(MascotColorSheet().background(Color(hex: "F5F5F5")), to: destination.appendingPathComponent("mascot-colors.png"))
                 try snapshot(DevIslandMark(size: 256).padding(32).background(Color(hex: "F5F5F5")), to: destination.appendingPathComponent("monogram.png"))
-                print("Rendered 12 native settings pages, 12 material panels, 2 compact islands, 4 custom character previews, 3 pose sheets, color sheet, monogram and 24 mascot animation samples, 42 session alert cards and 6 in-context session animations.")
+                try renderDragPreview(model: model, to: destination.appendingPathComponent("island-drag-simulation.gif"))
+                print("Rendered native settings pages, 12 material panels, 2 compact islands, 4 custom character previews, 3 pose sheets, color sheet, monogram and 24 mascot animation samples, 42 session alert cards and 6 in-context session animations.")
                 return
             } catch { FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8)); exit(1) }
         }
@@ -168,6 +174,38 @@ func launchTrace(_ stage: String) {
             throw CocoaError(.fileWriteUnknown)
         }
         try data.write(to: destination)
+    }
+    @MainActor private static func renderDragPreview(model: AppModel, to destination: URL) throws {
+        let saved = model.preferences
+        defer { model.preferences = saved }
+        model.preferences.islandPlacement = .init(); model.preferences.theme = .dark
+        let screen = IslandDisplay(displayIdentifier: 9999, frame: CGRect(x: 0, y: 0, width: 960, height: 600),
+                                   visibleFrame: CGRect(x: 0, y: 24, width: 960, height: 538), topInset: 38, notchWidth: 190, isBuiltIn: true)
+        let c = IslandController(model: model, screens: { [screen] })
+        c.layout(); defer { c.stop() }
+        let down = CGPoint(x: c.windowFrame.minX + 40, y: c.windowFrame.maxY - 18)
+        c.beginPress(at: down); c.beginDrag()
+        guard let gif = CGImageDestinationCreateWithURL(destination as CFURL, "com.compuserve.gif" as CFString, 28, nil) else { throw CocoaError(.fileWriteUnknown) }
+        CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        for index in 0..<28 {
+            let t = Double(index) / 27
+            let point = CGPoint(x: down.x + sin(t * .pi) * 270, y: down.y - sin(t * .pi) * 340)
+            c.drag(by: CGPoint(x: point.x - down.x, y: point.y - down.y))
+            let frame = c.windowFrame
+            let canvas = ZStack(alignment: .topLeading) {
+                Color(hex: "242627")
+                Text("Controller simulation · not a live desktop recording").font(.system(size: 13)).foregroundStyle(.white.opacity(0.7)).padding(18).offset(y: 540)
+                IslandView(model: model, presentation: c.presentation).frame(width: frame.width, height: frame.height)
+                    .offset(x: frame.minX, y: screen.frame.maxY - frame.maxY)
+                Image(systemName: "hand.draw.fill").font(.system(size: 20)).foregroundStyle(.white)
+                    .offset(x: point.x - 8, y: screen.frame.maxY - point.y - 8)
+            }.frame(width: 960, height: 600).environment(\.snapshotPreview, true).environment(\.colorScheme, .dark)
+            let renderer = ImageRenderer(content: canvas); renderer.scale = 1
+            guard let image = renderer.cgImage else { throw CocoaError(.fileWriteUnknown) }
+            CGImageDestinationAddImage(gif, image, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.08]] as CFDictionary)
+        }
+        c.endDrag(cancelled: true)
+        guard CGImageDestinationFinalize(gif) else { throw CocoaError(.fileWriteUnknown) }
     }
     @MainActor private static func renderSessionGIF(model: AppModel, to destination: URL) throws {
         let p = IslandPresentation(); p.mode = .expanded; p.bodyMode = .expanded; p.headerOffset = 54
@@ -244,6 +282,8 @@ func launchTrace(_ stage: String) {
         launchTrace("menu")
         refreshMenu(); updateShortcut()
         launchTrace("services")
+        model.updates.changed = { [weak self] in self?.refreshMenu() }
+        model.updates.start()
         model.start()
         mascot.layout()
         launchTrace("settings")
@@ -269,6 +309,9 @@ func launchTrace(_ stage: String) {
         quiet.state = model.preferences.quiet ? .on : .off
         item(model.preferences.showsMascot ? model.t("Maskotu gizle", "Hide mascot") : model.t("Maskotu göster", "Show mascot"), #selector(toggleMascot), menu: menu)
         menu.addItem(.separator())
+        let updateTitle = model.updates.availableVersion.map { model.t("\($0) güncellemesi hazır…", "Update \($0) available…") } ?? model.t("Güncellemeleri denetle…", "Check for Updates…")
+        let update = item(updateTitle, #selector(checkUpdates), menu: menu)
+        update.isEnabled = model.updates.canCheck
         item(model.t("Köprü testi gönder", "Send bridge test"), #selector(testBridge), menu: menu)
         menu.addItem(.separator())
         item(model.t("Dev Island’dan çık", "Quit Dev Island"), #selector(quit), menu: menu, key: "q")
@@ -285,9 +328,10 @@ func launchTrace(_ stage: String) {
     @objc private func toggleMascot() {
         var prefs = model.preferences
         if prefs.showsMascot { prefs.mascotHidden = true }
-        else { prefs.mascotHidden = false; if prefs.companionVisibility == .island { prefs.companionVisibility = .both } }
+        else { prefs.showDesktopMascot() }
         model.preferences = prefs
     }
+    @objc private func checkUpdates() { model.updates.check() }
     @objc private func testBridge() { model.testBridge() }
     @objc private func quit() { NSApp.terminate(nil) }
     private func openSettings() {

@@ -20,6 +20,7 @@ async function createRouter(vscode, options = {}) {
   const registryPath = path.join(root, `${windowID}.json`);
   const token = crypto.randomBytes(32).toString('hex');
   const terminalIDs = new Map();
+  const externalTargets = new Map();
   let disposed = false, generation = 0;
   const subscriptions = [];
   const commands = await vscode.commands.getCommands(true);
@@ -35,6 +36,9 @@ async function createRouter(vscode, options = {}) {
       if (!validPID(processID) || terminal.exitStatus !== undefined || !vscode.window.terminals.includes(terminal)) return undefined;
       return { id: terminalIDs.get(terminal), processID, name: String(terminal.name).slice(0, 160) };
     }))).filter(Boolean);
+    for (const target of [...externalTargets.values()].slice(0, 128)) {
+      try { if (target.isAlive()) terminals.push({ id: target.id, processID: target.processID, name: target.name, kind: 'external' }); } catch {}
+    }
     if (disposed || run !== generation) return;
     const record = { version: 1, windowID, bundleID: 'com.microsoft.VSCode', socketPath, token, canFocus,
       updatedAt: Date.now() / 1000, workspaceFolders: (vscode.workspace.workspaceFolders || []).filter(f => f.uri.scheme === 'file').slice(0, 64).map(f => f.uri.fsPath), terminals };
@@ -48,9 +52,16 @@ async function createRouter(vscode, options = {}) {
       !crypto.timingSafeEqual(Buffer.from(request.token), Buffer.from(token)) || request.windowID !== windowID || request.action !== 'focus' ||
       typeof request.requestID !== 'string' || request.requestID.length > 64 || !validPID(request.processID)) return { ...base, error: 'unauthorized' };
     const terminal = [...terminalIDs].find(([terminal, id]) => id === request.terminalID && vscode.window.terminals.includes(terminal))?.[0];
-    if (!terminal || terminal.exitStatus !== undefined || await boundedPID(terminal.processId) !== request.processID) return { ...base, error: 'terminal-closed' };
+    const external = externalTargets.get(request.terminalID);
+    const externalAlive = () => { try { return external && externalTargets.get(request.terminalID) === external && external.processID === request.processID && external.isAlive(); } catch { return false; } };
+    if ((!terminal || terminal.exitStatus !== undefined || await boundedPID(terminal.processId) !== request.processID) && !externalAlive()) return { ...base, error: 'terminal-closed' };
     if (!canFocus) return { ...base, error: 'focus-unavailable' };
     await vscode.commands.executeCommand('workbench.action.focusWindow');
+    if (external && externalAlive()) {
+      const selected = await external.focus() === true && externalAlive() && !disposed;
+      const windowFocused = !!vscode.window.state.focused;
+      return { ...base, ok: selected && windowFocused, selected, windowFocused, error: selected && windowFocused ? undefined : 'focus-failed' };
+    }
     if (disposed || !vscode.window.terminals.includes(terminal) || terminal.exitStatus !== undefined || await boundedPID(terminal.processId) !== request.processID) return { ...base, error: 'terminal-closed' };
     terminal.show(false);
     for (let i = 0; i < 30; i++) {
@@ -87,11 +98,18 @@ async function createRouter(vscode, options = {}) {
   function dispose() {
     if (disposed) return;
     disposed = true; generation++; clearInterval(heartbeat);
+    externalTargets.clear();
     for (const sub of subscriptions) sub.dispose();
     server.close();
     for (const file of [registryPath, registryPath + '.tmp', socketPath]) { try { fs.unlinkSync(file); } catch {} }
   }
   try { await refresh(); } catch (error) { dispose(); throw error; }
-  return { windowID, registryPath, refresh, dispose };
+  function registerExternalTerminal(target) {
+    if (disposed || !target || typeof target.id !== 'string' || !/^[a-f0-9-]{36}$/.test(target.id) || !validPID(target.processID) || typeof target.isAlive !== 'function' || typeof target.focus !== 'function' || externalTargets.has(target.id)) throw new Error('Invalid external terminal registration');
+    const entry = { id: target.id, processID: target.processID, name: String(target.name || 'Canlı Terminal').slice(0, 160), isAlive: target.isAlive, focus: target.focus };
+    externalTargets.set(entry.id, entry); refresh().catch(() => {});
+    return { dispose() { if (externalTargets.get(entry.id) === entry) { externalTargets.delete(entry.id); refresh().catch(() => {}); } } };
+  }
+  return { windowID, registryPath, refresh, dispose, registerExternalTerminal };
 }
 module.exports = { createRouter, defaultRoot };

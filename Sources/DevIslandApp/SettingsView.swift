@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 import DevIslandCore
 
 enum SettingsPage: String, CaseIterable, Identifiable {
-    case overview, notifications, appearance, integration, privacy, history
+    case overview, notifications, appearance, integration, privacy, history, updates
     var id: String { rawValue }
     var icon: String {
         switch self {
@@ -15,6 +15,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .integration: return "point.3.connected.trianglepath.dotted"
         case .privacy: return "hand.raised"
         case .history: return "clock.arrow.circlepath"
+        case .updates: return "arrow.down.circle"
         }
     }
     @MainActor func title(_ m: AppModel) -> String {
@@ -25,6 +26,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .integration: return m.t("Claude bağlantısı", "Claude connection")
         case .privacy: return m.t("Gizlilik ve genel", "Privacy & general")
         case .history: return m.t("Olay geçmişi", "Activity history")
+        case .updates: return m.t("Güncellemeler", "Updates")
         }
     }
 }
@@ -59,7 +61,7 @@ struct SettingsView: View {
                     Circle().fill(model.integrationInstalled && !model.integrationBlocked ? SessionState.completed.tint : islandOrange).frame(width: 5, height: 5)
                     Text(model.integrationInstalled ? model.t("Bağlı", "Connected") : model.t("Bağlı değil", "Not connected"))
                     Spacer()
-                    Text("0.3.6")
+                    Text(BuildInfo.version)
                 }.font(.system(size: 10)).foregroundStyle(Color(colors.secondary)).padding(16)
             }.frame(width: 216).background(Color(colors.canvas))
             Divider()
@@ -83,6 +85,7 @@ struct SettingsView: View {
                         case .integration: integration
                         case .privacy: privacy
                         case .history: history
+                        case .updates: UpdatesSettingsView(updates: model.updates, model: model)
                         }
                     }.padding(20)
                 }
@@ -308,7 +311,12 @@ struct SettingsView: View {
                         Slider(value: $model.preferences.mascotSize, in: 64...160, step: 8).accessibilityLabel(model.t("Maskot boyutu", "Mascot size"))
                         Text("\(Int(model.preferences.mascotSize)) pt").monospacedDigit().font(.caption).frame(width: 48)
                     }
-                    Button(model.t("Maskot konumunu sıfırla", "Reset mascot position")) { model.resetMascotPosition?() }
+                }
+                Button(model.t("Maskotu göster ve konumunu sıfırla", "Show mascot and reset its position")) { model.showDesktopMascot(resetPosition: true) }
+                    .help(model.t("Maskotu görünür ekran alanına getirir; renk ve boyut korunur.", "Bring the mascot into the visible screen area; color and size are preserved."))
+                if !model.preferences.showsMascot {
+                    Text(model.t("Masaüstü maskotu gizli. Yukarıdaki düğmeyle geri getirebilirsin.", "The desktop mascot is hidden. Use the button above to bring it back."))
+                        .font(.caption).foregroundStyle(Color(colors.secondary))
                 }
                 Button(model.t("Oturum panelini aç", "Open activity panel")) { model.showSessions?() }
             }

@@ -1,14 +1,20 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
+python3 scripts/version.py --generate
+version="$(python3 scripts/version.py version)"
 configuration="${CONFIGURATION:-release}"
 bash scripts/swift.sh build -c "$configuration" --arch arm64
 binary_dir="$(bash scripts/swift.sh build -c "$configuration" --arch arm64 --show-bin-path)"
 app="$PWD/dist/Dev Island.app"
-mkdir -p "$app/Contents/MacOS" "$app/Contents/Helpers" "$app/Contents/Resources/en.lproj" "$app/Contents/Resources/tr.lproj"
+rm -rf "$app"
+mkdir -p "$app/Contents/Frameworks" "$app/Contents/MacOS" "$app/Contents/Helpers" "$app/Contents/Resources/en.lproj" "$app/Contents/Resources/tr.lproj"
 cp "$binary_dir/DevIsland" "$app/Contents/MacOS/DevIsland"
 cp "$binary_dir/dev-island-bridge" "$app/Contents/Helpers/dev-island-bridge"
 cp Resources/Info.plist "$app/Contents/Info.plist"
+ditto .build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework "$app/Contents/Frameworks/Sparkle.framework"
+python3 scripts/configure-updates.py "$app/Contents/Info.plist"
+ditto Resources/ThirdParty "$app/Contents/Resources/ThirdParty"
 python3 scripts/package-vscode-extension.py "$app/Contents/Resources/DevIslandVSCode.vsix"
 cat > "$app/Contents/Resources/tr.lproj/InfoPlist.strings" <<'EOF'
 "NSAppleEventsUsageDescription" = "Dev Island, Claude oturumuna ait Apple Terminal sekmesini seçebilir. İzin vermezsen yalnızca Terminal uygulamasını öne getirir.";
@@ -26,14 +32,7 @@ for size in 16 32 128 256 512; do
 done
 python3 scripts/pack-icon.py .build/icon.iconset "$app/Contents/Resources/AppIcon.icns"
 identity="${DEV_ISLAND_SIGN_IDENTITY:--}"
-if [ "$identity" = "-" ]; then
-    codesign --force --sign - "$app/Contents/Helpers/dev-island-bridge"
-    codesign --force --sign - --entitlements Resources/DevIsland.entitlements "$app"
-else
-    codesign --force --options runtime --timestamp --sign "$identity" "$app/Contents/Helpers/dev-island-bridge"
-    codesign --force --options runtime --timestamp --sign "$identity" --entitlements Resources/DevIsland.entitlements "$app"
-fi
-codesign --verify --deep --strict "$app"
-ditto -c -k --sequesterRsrc --keepParent "$app" dist/Dev-Island-0.3.6-arm64.zip
+python3 scripts/sign-bundle.py "$app" "$identity"
+ditto -c -k --sequesterRsrc --keepParent "$app" "dist/Dev-Island-${version}-arm64.zip"
 echo "Built: $app"
-if [ "$identity" = "-" ]; then echo "Local ad-hoc signature. Developer ID signing and notarization are still required for public distribution."; fi
+if [ "$identity" = "-" ]; then echo "Local build: remote updates disabled; Developer ID and notarization required for publishing."; fi

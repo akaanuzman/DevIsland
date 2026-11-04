@@ -1,8 +1,8 @@
 {
   "passed": true,
-  "offline_bridge_ms": 275.37,
-  "live_bridge_mean_ms": 30.69,
-  "concurrent_wall_ms": 50.55,
+  "offline_bridge_ms": 205.18,
+  "live_bridge_mean_ms": 34.5,
+  "concurrent_wall_ms": 45.0,
   "concurrent_processes": 10,
   "sessions": 10,
   "checks": [

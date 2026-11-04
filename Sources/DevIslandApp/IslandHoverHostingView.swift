@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 /// Track the entire panel even while another application has keyboard focus.
-final class IslandHoverHostingView: NSHostingView<IslandView> {
+final class IslandHoverHostingView: PanelHostingView<IslandView> {
     var hoverChanged: ((Bool) -> Void)?
     private var islandArea: NSTrackingArea?
     override func updateTrackingAreas() {
