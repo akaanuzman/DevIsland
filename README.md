@@ -1,147 +1,121 @@
 # Dev Island
 
-Claude Code oturumlarını izleyen, yerel çalışan macOS menü çubuğu uygulaması. Soru, plan ve izin bekleme durumlarını çentiğin yanında açılan bir ada, sistem bildirimi ve isteğe bağlı seslerle gösterir.
+**English** · [Türkçe](README.tr.md)
 
-**Durum:** v0.4.1 yerel alfa. Dağıtılabilir beta kabulü için Developer ID/notarization, ikinci Mac ve gerçek terminal senaryolarının tamamlanması gerekir. Clawd, Kedi ve Robot maskotları bu sürüme dahildir; mobil push sonraki fazdadır.
+A native macOS menu bar app that keeps you informed while Claude Code works. Follow multiple sessions from a notch-aware island, get notified when a session needs attention, and return to the terminal it belongs to.
 
-## v0.3.7: maskotu geri getirme ve kolay kapatma
+**Current version: 0.4.1 — local alpha.** Signed distribution and end-to-end automatic updates still require release configuration and device acceptance. See [validation](docs/VALIDATION.md) for completed checks and remaining work.
 
-Görünüm → **Maskotu göster ve konumunu sıfırla**, gizli veya yalnızca ada modundaki masaüstü karakterini geri getirir. Boyut, vurgu/karakter renkleri ve diğer ayarlar korunur. Menü çubuğundaki **Maskotu göster** kayıtlı konumu koruyarak açar.
+## Features
 
-Ada ve maskot panelindeki **X**, 32×32 pt native tıklama alanına sahiptir. Başka bir uygulama odaktayken ilk tıklamada çalışır; Escape ile de kapanır. Kapanırken gelen hover olayları adayı hemen geri açmaz. Pointer kompakt adada kaldıysa yeniden hover açılışı için önce dışına çıkıp tekrar gelmek gerekir. Yeni bildirim veya açıkça yeniden açma normal çalışır.
+- **Multiple sessions:** Claude session names, custom labels and persistent waiting states across projects and terminals.
+- **Attention at a glance:** questions, plan approvals, permission requests, response completion, failures and disconnected sessions.
+- **Movable island:** pin to the top center, save a custom position, or open the docked panel and drag **Move**. Clicking Move detaches the island below the menu bar.
+- **Animated companions:** Clawd, Cat and Robot share session states across the island and a draggable desktop mascot. Use either surface or both.
+- **Personal appearance:** system/light/dark themes, customizable accent and per-character colors, separate reset controls, and Liquid Glass, frosted or opaque surfaces. Liquid Glass falls back to frosted glass on macOS 14/15.
+- **Configurable alerts:** event-specific notifications and sounds, custom audio volume, quiet hours, snooze and session muting.
+- **Native accessibility:** Reduce Motion, Reduce Transparency, keyboard access and a customizable session shortcut.
+- **English and Turkish interfaces.**
 
-[Detay ve kabul notları](docs/V037_MASCOT_AND_CLOSE.md).
+## Requirements
 
-## v0.3.6: doğru VS Code penceresi ve terminali
+- Apple Silicon Mac running **macOS 14 or later**.
+- Claude Code installed locally for session tracking.
+- To build: **Xcode 26 or later** with its command-line tools selected, and Python 3. The source uses the macOS 26 SDK for Liquid Glass while targeting macOS 14+.
+- SwiftPM downloads the pinned **Sparkle 2.9.6** dependency during the build. Node.js is needed for connector tests.
 
-**Uygulamaya dön**, kaynak Claude sürecinin bağlı olduğu VS Code penceresini ve terminali seçer. Aynı projedeki aynı adlı terminaller PID/instance kimliğiyle ayrılır. Kapalı veya doğrulanamayan hedefte başka bir pencere seçilmez, yeni terminal açılmaz.
+## Build and connect
 
-Bu Mac'te bağlantı eklentisi kuruldu ve üç VS Code penceresinde etkinleşti. Eski Dev Island'dan **Çık** yapıp yeni uygulamayı aç. Başka Mac/profil için Ayarlar → Claude bağlantısı → **VS Code bağlantısını kur / güncelle**. VSIX uygulamanın içinde gelir; gerekirse VS Code Extensions → Install from VSIX ile kurulabilir. Açık pencere bağlanmazsa uygun zamanda Developer: Reload Window kullanılabilir. Mevcut terminaller otomatik yeniden başlatılmaz.
-
-Gerçek 3 pencere ve 5 Claude terminalinde üretim routing istemcisiyle doğrulandı. [Teknik kapsam ve test kanıtı](docs/V036_VSCODE_ROUTING.md). Remote/tmux ve Cursor'da tam terminal seçimi sonraki uyumluluk kapsamındadır.
-
-## v0.3.5: terminaldeki gerçek Claude oturum adı
-
-Ada artık klasör adı yerine `improve-shop-experience` gibi Claude oturum adını kullanır. Mevcut izlenen oturumların adları uygulama açıldığında ve 5 saniyede bir yerel isim metaverisinden tamamlanır. Aynı projedeki oturumlar kimlikleriyle eşleştirilir; `out` gibi değişen çalışma klasörleri isim eşlemesini bozmaz. Dev Island'da elle verilen etiket önceliklidir. Proje gizleme bütün isim alanlarında çalışır. Uzun kompakt adın tamamı başlık tooltip'inde görülebilir.
-
-Claude ayarları ve transcriptlerine yazılmaz. Hook alanı ve yerel formatlar için ayrıntı: [V035](docs/V035_SESSION_NAMES.md). Eski sürümü **Çık** ile kapatıp yeni kopyayı aç; izlenen oturumların adları yeni bir prompt beklemeden yenilenir. Mevcut hook kurulumu geçerlidir; yeni köprü için Claude bağlantı kurulumunu uygulama ayarlarından tekrar çalıştırabilirsin.
-
-## v0.3.4: oturum adı ve durum maskotları
-
-Kompakt başlık öncelikli oturumun etiketini (yoksa proje adını) gösterir. Bildirim açıldığında başlıktaki ad ve maskot o bildirimin oturumuna geçer. Uzun adlar sabit alanda kısalır; kamera alanı boş ve kompakt yükseklik sabit kalır.
-
-Bildirim kartında 44 pt, açılan oturum listesinde 32 pt maskot her oturumun kendi durumunu izler. Seçilen karakter ve renk paylaşılır. Kutlama yalnızca canlı tamamlanma olayında, bütün yüzeylerde aynı başlangıç saatiyle oynar; paneli yeniden açmak tekrarlatmaz. Proje gizleme adı “Claude Code” yapar. Kapalı yüzeylerde ve uyku sırasında animasyon saati durur; Reduce Motion sabit poz kullanır. Ayarlar listesindeki sade ikonlar korunur.
-
-## v0.3.3: üst konum giriş düzeltmesi
-
-Yalnızca üstteyken hover/tıklamanın çalışmaması için pencere seviyesi düzeltildi. Çentikli ekranda kameranın altında küçük bir etkileşim şeridi bulunur; sistem alanındaki mouse olayları için dar kapsamlı fallback eklenir. Serbest sürükleme davranışı korunur. Ayrıntılar [V033_FIX](docs/V033_FIX.md) içindedir.
-
-**Güncelleme:** Önce menü çubuğundaki Dev Island → Çık eylemini kullan, sonra yeni uygulamayı aç. Eski arka plan süreci kapanmadan yeni kopyayı açmak sürümü değiştirmeyebilir.
-
-## Üst sabitleme ve hover
-
-Sürüklenen adanın sağındaki **pin** düğmesi, adayı üst ortaya sabitler. Düğme yalnızca serbest konumda görünür. Üstteyken üzerine gelince büyür; dışına çıkınca küçülür. Tıklayarak açılan liste, yeniden tıklayana veya Escape’e basana kadar açık kalır. Hover, başka uygulama odaktayken de izlenir.
-
-## Üst kenar, sürükleme ve sıfırlama
-
-Ada varsayılan olarak ekranın fiziksel üst ortasına yapışır. Başlığından sürükleyip bırak; konum yeniden açılışta korunur. Ekranın altına bırakıldığında oturum paneli yukarı açılır. Üst ortaya yakın bırakmak, başlığa sağ tıklamak veya Görünüm → Adayı üst ortaya sıfırla eylemi varsayılan konuma döndürür. Ekran değişirse ada görünür alanda kalır.
-
-Görünüm’de vurgu ve karakter rengi için ayrı Varsayılana sıfırla düğmeleri bulunur. Vurgu turuncuya (#D97757), seçili karakter uygulama rengini izlemeye döner. Diğer karakter renkleri ve ayarlar korunur. Kedinin normal pozları artık hafif gülümser.
-
-## v0.3: kompakt ada, yerel tasarım ve üç maskot
-
-Ana kaynak proje /Users/kaanuzman/Desktop/dev/DevIsland içindedir. Sohbetin outputs/DevIsland-v0.3.7 klasörü yalnızca yayın paketleri, önizlemeler ve doküman teslimidir.
-
-**Görünüm** bölümünde Sistem/Açık/Koyu tema ve Liquid Glass/Buzlu cam/Opak yüzey ayrı seçilir. macOS 26 gerçek Liquid Glass kullanır; macOS 14/15 buzlu cam karşılığını gösterir. Cam stili, zemin yoğunluğu ve vurgu rengi ayarlanabilir. Reduce Transparency opak yüzeye, Reduce Motion hareketsiz maskot pozlarına ve kısa geçişlere dönüşür.
-
-Varsayılan vurgu Claude turuncusu **#D97757**; renk seçiciden değişir. Özel çizilmiş **di** monogramı ikon ve menü çubuğunda kullanılır. Tema bütün SwiftUI/AppKit pencerelerine birlikte uygulanır; özel vurgu yazıları okunabilir tona dönüştürülür.
-
-Varsayılan görünüm **Ada + maskot**tur. Görünüm’den **Clawd / Kedi / Robot** seçilir. Maskot varsayılan olarak uygulama rengini izler; her karakter için ayrı özel renk hatırlanır. Maskot sağ altta başlar, sürüklenebilir ve konumunu hatırlar. Tıklayınca oturum paneli açılır; sağ tıkla gizle, boyutlandır veya konumu sıfırla. Gizlenen maskot menü çubuğundan geri açılır. Tek başına ada veya tek başına maskot da kullanılabilir. Maskot yeni ses/bildirim üretmez; bildirim tercihleri ortak motordan gelir.
-
-Kompakt ada yalnızca başlık yüksekliğindedir; gizli liste yer kaplamaz. Ada ve maskot paneli gerçek içeriği ölçerek büyür, yalnızca gerektiğinde kayar. Genel bakış, native sidebar ve sade oturum satırları kullanır.
-
-Ada açılışı 320 ms, kapanışı 240 ms; hover beklemesi 120/400 ms’dir. Araç olayları hedef boyutu değiştirmedikçe ve 1 pt ölçüm yuvarlaması oluştuğunda animasyonu yeniden başlatmaz. Yeni bir geçiş yarıdaki görünür boyuttan devam eder. Eski ayarlar yeni tercih alanları eklenince sıfırlanmaz.
-
-## Çalıştırma
-
-Apple Silicon Mac, macOS 14+ ve Xcode/Swift 6 araçları gerekir. Derlemede Sparkle 2.9.6 SwiftPM üzerinden indirilir. Oturum takibi için hesap veya sunucu gerekmez.
+From the repository root:
 
 ```bash
 bash scripts/build-app.sh
 open "dist/Dev Island.app"
 ```
 
-Paketlenmiş uygulama `dist/Dev Island.app`, arşiv `dist/Dev-Island-0.4.1-arm64.zip` altında oluşur. Yerel derleme ad-hoc imzalıdır; başka Mac’lere dağıtım için `scripts/notarize.sh` kullanılır. Finder’da Applications’a taşındıktan sonra hook kurulumu yapılması önerilir. Köprü sabit bir kullanıcı veri dizinine kopyalandığı için uygulama güncellemesi hook komutunu değiştirmez.
+The script creates `dist/Dev Island.app` and a versioned ZIP, currently `dist/Dev-Island-0.4.1-arm64.zip`. Local builds are ad-hoc signed. Move the app to Applications before setting up the integration. When replacing an older copy, **quit the running Dev Island first**, then launch the new copy.
 
-İlk açılışta **Hook’ları incele ve bağlan** ile eklenecek kayıtları gör. Kurulum mevcut Claude ayarlarını yedekleyerek korur. Mevcut Claude oturumlarını yeniden başlat, bir prompt gönder ve oturumun listede göründüğünü doğrula. Bildirim izni **Bildirimler ve ses** bölümünden verilir. Girişte başlatma varsayılan kapalıdır.
+1. In Settings, open **Claude connection** and review the hooks before installing them. Existing Claude settings and other hooks are preserved; installation backs up `settings.json`.
+2. Restart existing Claude sessions after the initial hook installation, then send a prompt to verify tracking.
+3. Grant notification permission in **Alerts & sound** if you want system notifications. Launch at login is optional and off by default.
+4. For exact VS Code routing, choose **Install / update VS Code connection**. The VSIX is bundled. If a window does not connect, reload it when convenient; existing terminals are not recreated.
 
-**Köprü testi** gerçek paket köprüsünü çalıştırır; Claude hesabına istek atmaz ve Claude ayarlarını değiştirmez. Test oturumu menüsünden örnek kaydı kaldırabilirsin. Testin geçmesi, tüm terminal entegrasyonlarının canlı doğrulandığı anlamına gelmez.
+## Everyday use
 
-## Kullanım
+Open sessions from the menu bar or the default **⇧⌘D** shortcut. Hover opens the island without activating the app; clicking keeps the list open until you close it. Escape closes the panel or cancels a drag.
 
-- Menü çubuğundaki Dev Island simgesinden veya varsayılan `⇧⌘D` kısayolundan oturumları aç.
-- Soru/onay sayacı, bildirimi kapatsan da kalır. Yalnızca ilgili Claude devam olayı bu beklemeyi çözer.
-- Kart menüsünden 5 dakika ertele, sustur veya etiket ekle.
-- Kaynak uygulama biliniyorsa ona dönülür. Bilinmiyorsa tek açık aday seçilir veya kullanıcıdan seçim istenir; tercihi hatırlamak mümkündür.
-- Apple Terminal’de TTY eşleşmesi ve Automation izniyle sekme seçilir. VS Code yerel bağlantısı doğru pencere ve terminali seçer. Cursor ve Warp uygulamayı öne getirir; bu ikisinde doğru paneli seçme desteği sonraki fazdadır.
-- `Stop` yalnızca yanıt sonudur: projedeki işlerin başarıyla tamamlandığına dair doğrulama değildir.
+When pinned, open the panel and drag the **64×32 pt Move handle** below the menu bar. Clicking it detaches the island into the usable screen area. The floating header's pin button returns it to the top center. Positions are saved, and the panel can open upward near the bottom of a screen.
 
-## Ses ve Focus
+Dismissing or muting an alert does not resolve a waiting question; Claude must emit a continuation event. A completed response means Claude's turn ended, not that the entire project succeeded. The desktop mascot does not generate duplicate alerts.
 
-Dengeli profil soru, plan, izin ve hatada sesli; yanıt tamamlanmasında sessizdir. Varsayılan sistem sesi Focus ve macOS bildirim ayarlarını kullanır. Bu modda ses için bir sistem bildirimi de gerekir. Özel seslerin seviyesi uygulamadan ayarlanabilir; özel ses ve ada Focus’a otomatik bağlanmaz. Sessiz mod ve sessiz saatler bütün yeni uyarıları durdurur; bekleyen oturumları silmez.
+## Return to your terminal
 
-## Gizlilik ve dosyalar
+| Application | Current behavior |
+| --- | --- |
+| VS Code | Selects the matching local window and terminal through the bundled connector, using process identity rather than name or project-path guesses. |
+| Apple Terminal | Selects the matching tab using its TTY with Automation permission; otherwise brings Terminal forward. |
+| Cursor / Warp | Brings the source application forward; exact terminal selection is not supported yet. |
 
-Oturum takibi tamamen yereldir; telemetri yoktur. Resmî imzalı sürüm, güncelleme kontrolü ve paket indirmek için GitHub Pages/Releases’a HTTPS bağlantısı kurar. Oturum veya konuşma içeriği bu servislere gönderilmez. Yerel geliştirme paketinde güncelleyici kapalıdır. Raw hook JSON, prompt, komut, plan ve transcript saklanmaz. Aktarım kuyruğu ve SwiftData snapshot yalnızca izin verilen metaveriyi tutar. Soru metni yalnızca canlı yerel socket üzerinden belleğe gelir; diske yazılmaz. Sistem bildirimleri proje/soru içermeyen genel durum metnidir.
+Missing or unverifiable VS Code targets report an error rather than opening a replacement terminal. SSH, remote/dev-container terminals and tmux pane selection are outside the current scope. See [connector setup](extensions/vscode/README.md) and [routing details](docs/V036_VSCODE_ROUTING.md).
 
-Yerel veri: `~/Library/Application Support/DevIsland/`; izinler dizinde `0700`, kuyruk dosyalarında `0600`. Varsayılan geçmiş süresi 7 gündür. Aktif ve çözülmemiş oturumlar geçmiş temizlenince korunur. Tercihler UserDefaults’tadır. `CLAUDE_CONFIG_DIR` veya ayarlardaki dizin alanı özel Claude yapılandırmalarını destekler.
+## Sound and Focus
 
-Bağlantıyı kaldırmak için **Claude bağlantısı → Bağlantıyı kaldır** kullan. Mevcut kullanıcı ayarları ve diğer hook’lar korunur. Eski Claude oturumlarının önbelleğe aldığı komutların hata vermemesi için küçük, etkisiz köprü dosyası yerinde kalır. Claude oturumlarını kapattıktan sonra veri klasörünü silebilirsin.
+The balanced profile sounds for questions, approvals, permissions and failures; response completion is silent by default. System notifications and their sounds follow macOS delivery and Focus rules. Custom audio has its own volume control; custom audio and the island do not automatically follow Focus. Quiet mode, quiet hours and session muting control alerts without removing waiting sessions.
 
-## Geliştirme ve doğrulama
+## Privacy and local data
+
+Tracking runs locally through Claude Code hooks and a small bridge. It requires no account or server, and adds no telemetry.
+
+- The disk queue and SwiftData history store session metadata, not raw hook payloads, prompts, commands, plans or full transcripts. Session naming reads local metadata without modifying Claude's files.
+- Question previews stay in memory. System notifications use generic status text.
+- Data lives in `~/Library/Application Support/DevIsland/`; preferences use UserDefaults. History retention defaults to seven days, while active and unresolved sessions are preserved.
+- `CLAUDE_CONFIG_DIR` and the settings directory field support custom Claude configurations.
+- Tracking does not require Screen Recording, Accessibility or Full Disk Access. Apple Terminal tab selection may request Automation permission.
+
+Remove the integration from **Claude connection → Remove connection**. Other hooks remain intact. The bridge stays in place so older running sessions with cached hook commands can exit safely.
+
+## Updates and releases
+
+Sparkle supports hourly checks, manual checks and optional beta releases in **Settings → Updates**. Installation requires user action. Official builds use GitHub Releases for packages and GitHub Pages for the feed; session content is not sent to these services.
+
+**Remote updates are disabled in local ad-hoc builds.** Developer ID Application signing, notarization, repository secrets and Pages setup must be completed before official updates can be published. The first updater-enabled release needs a manual installation; later official releases can update in place.
+
+[`Resources/version.json`](Resources/version.json) is the version/build source of truth. See [release setup](docs/UPDATES.md) for signing, stable/beta tags and the publishing workflow.
+
+## Development and verification
 
 ```bash
 bash scripts/swift.sh test
+node --test extensions/vscode/test/router.test.js
 bash scripts/build-app.sh
+python3 -m unittest discover -s scripts/tests -v
 python3 scripts/smoke-bridge.py
+python3 scripts/smoke-session-names.py
 "dist/Dev Island.app/Contents/MacOS/DevIsland" --verify-storage
-bash scripts/package-dmg.sh
 ```
 
-`scripts/swift.sh`, SwiftPM ve Clang önbelleklerini proje içine alır. SwiftPM manifest sandbox’ının kapatılması yalnızca derleme sürecine aittir; uygulama zaten kullanıcı tarafından kurulabilen, sandbox dışı bir menü çubuğu aracıdır. Root/daemon gerekmez.
+Build before running release-script tests so Sparkle's signing tools are available. The latest recorded validation reports **131 passing Swift tests, one skipped physical-screen test, 11 connector tests and five release tests**. Physical mouse/trackpad, Spaces, multi-display and signed-update acceptance remain documented separately; automated tests and rendered previews do not replace those checks.
 
-UI demosu için gerçek kullanıcı verilerinden ayrı bir klasör kullan:
+For sample sessions with a separate data directory, quit the running app first:
 
 ```bash
 open -n "dist/Dev Island.app" --args --demo --data-dir /tmp/dev-island-demo --show-settings
 ```
 
-Bu mod örnek oturumları gösterir, bildirim izni istemez veya hook kurmaz. Aynı bundle’ın ikinci kopyası çalıştırılmaz; önce açık Dev Island’dan çık.
-
-Ekrana uygulama açmadan SwiftUI yerleşimini render etmek için:
+Demo mode does not install hooks or request notification permission. To render layout previews:
 
 ```bash
 .build/arm64-apple-macosx/release/DevIsland --demo --data-dir /tmp/dev-island-render --render-preview previews
 ```
 
-Bu komut altı ayar sayfasını açık/koyu temada gerçek NSHostingView/native kontrollerle ekran dışında çizer. Ada ve maskot paneli için 12 malzeme/tema örneği, iki kompakt ada, özel renkli kedi/robot örnekleri, üç karakterin sekiz pozu ve 24 GIF üretir. Ada örneklerinde camın desktop örneklemesi yerine statik temsil, ScrollView ve Menu için render edilebilir karşılıklar kullanılır. Gerçek pencere, odak, izin veya macOS bildirim teslim testinin yerine geçmez. Paket başlatma sorunlarında `DEV_ISLAND_TRACE=1` yalnızca açılış aşamalarını stderr’e yazar; oturum içeriği yazmaz.
+## Documentation
 
-## Yayınlama
+- [Product and architecture](docs/PLAN.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Validation and acceptance gaps](docs/VALIDATION.md)
+- [Pinned-island movement](docs/V041_PINNED_DRAG.md)
+- [Session names](docs/V035_SESSION_NAMES.md)
+- [Release and update setup](docs/UPDATES.md)
+- [Asset notices](docs/ASSET_NOTICES.md) · [Sparkle license](Resources/ThirdParty/Sparkle-LICENSE.txt)
 
-```bash
-export DEV_ISLAND_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
-export DEV_ISLAND_NOTARY_PROFILE="your-notarytool-profile"
-bash scripts/notarize.sh
-```
-
-Sertifika ve notarytool profili bu repoya eklenmez. Yayın script’i nested köprüyü ve uygulamayı hardened runtime ile imzalar, Apple’a gönderir, bileti staple eder, DMG oluşturur ve DMG’yi doğrular.
-
-v0.3.4 sunumu: [V034](docs/V034_SESSION_MASCOTS.md). v0.3.3 düzeltmesi: [V033_FIX](docs/V033_FIX.md). Önceki kapsam: [V032_PLAN](docs/V032_PLAN.md). Önceki sürüm: [V031_PLAN](docs/V031_PLAN.md). Önceki v0.3 kapsamı: [V03_PLAN](docs/V03_PLAN.md). Önceki v0.2 tema/animasyon/maskot kararları: [V02_PLAN](docs/V02_PLAN.md). Ürün/mimari kararları: [PLAN](docs/PLAN.md). Gelecek fazlar: [ROADMAP](docs/ROADMAP.md). Doğrulama ve kalan kabul işleri: [VALIDATION](docs/VALIDATION.md).
-
-## v0.4 — taşıma ve uygulama içinden güncelleme
-
-Başlıktaki noktalı tutamaktan veya başlığın diğer boş alanlarından taşı. Basılı tutarken hover ve bildirim kapanışı durur; 4 pt hareket taşıma sayılır. Escape eski konuma döner; üste sabitleme ve kayıtlı ekran konumları korunur.
-
-Ayarlar → Güncellemeler, resmî sürümlerde saatlik kontrol, isteğe bağlı beta ve manuel güncelleme sunar. İlk 0.4 kurulumu elle yapılır; sonraki sürümler Sparkle üzerinden gelir. Bu klasördeki ad-hoc paket resmî uzaktan yayın değildir. Tek kaynak sürüm dosyası `Resources/version.json`; imza/Secrets/Pages kurulumu ve etiketleme için [UPDATES.md](docs/UPDATES.md).
-
-Üste sabitlenmiş adayı kolay taşımak için üzerine gelerek paneli aç, **Taşı** alanını sürükle. Bu alan menü çubuğunun altında 64×32 pt gerçek bir hedef sunar. Taşı’ya tek tıklamak adayı üstten ayırır; ardından normal başlığından da taşınır. Kompakt yükseklik ve üste sabitleme korunur.
+Some technical documents are currently in Turkish.
