@@ -25,6 +25,11 @@ final class EditorRoutingTests: XCTestCase {
         failure([window([101]),window([101])], [101], .ambiguous)
         let now = Date(), future = EditorWindow(windowID: UUID().uuidString, socketPath: "/tmp/test", token: "token", updatedAt: now.addingTimeInterval(30).timeIntervalSince1970, workspaceFolders: [], terminals: [])
         failure([future], [101], .missingConnector)
+        let old = window([101]), oldEditor = EditorWindow(windowID: old.windowID, socketPath: old.socketPath, token: old.token, canFocus: false,
+                                                         updatedAt: old.updatedAt, workspaceFolders: old.workspaceFolders, terminals: old.terminals)
+        failure([oldEditor], [101], .editorTooOld)
+        failure([window([101], age: 46), oldEditor], [101], .editorTooOld)
+        XCTAssertEqual(try EditorRoutePolicy.select(windows: [oldEditor, window([202])], processIDs: [202]).terminal.processID, 202)
     }
     func testSourcePIDBirthTimeProtectsAgainstReuse() throws {
         let info = try XCTUnwrap(ProcessIdentity.read(getpid()))
